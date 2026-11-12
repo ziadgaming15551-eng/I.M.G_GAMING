@@ -3,7 +3,8 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
 const {
   getFirestore,
-  FieldValue
+  FieldValue,
+  Timestamp
 } = require("firebase-admin/firestore");
 
 initializeApp();
@@ -11,8 +12,13 @@ initializeApp();
 const db = getFirestore();
 const REGION = "europe-west1";
 const TIME_ZONE = "Africa/Cairo";
+const MAX_LEVEL = 100;
+const XP_BOOST_DURATION = 60 * 60 * 1000;
 
-// Get the current date in Egypt.
+// ------------------------------
+// DATE HELPERS
+// ------------------------------
+
 function getEgyptDate() {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: TIME_ZONE,
@@ -32,11 +38,115 @@ function getEgyptDate() {
 function dayDifference(first, second) {
   const a = new Date(`${first}T00:00:00Z`);
   const b = new Date(`${second}T00:00:00Z`);
-
   return Math.round((b - a) / 86400000);
 }
 
-// Create a player's private and public profiles automatically.
+// ------------------------------
+// LEVEL SYSTEM
+// ------------------------------
+
+function getLevelData(totalXp) {
+  let level = 1;
+  let remaining = Math.max(0, totalXp);
+
+  while (level < MAX_LEVEL) {
+    const required = level * 100;
+
+    if (remaining < required) {
+      return {
+        level,
+        xp: remaining,
+        xpToNextLevel: required
+      };
+    }
+
+    remaining -= required;
+    level++;
+  }
+
+  return {
+    level: MAX_LEVEL,
+    xp: 0,
+    xpToNextLevel: 0
+  };
+}
+
+// Must be called inside a Firestore transaction.
+// totalXp is the player's lifetime XP.
+function grantXpInTransaction(transaction, uid, player, baseAmount) {
+  const oldLevel = player.level || 1;
+  const now = Date.now();
+
+  let multiplier = 1;
+  const activeBoost = player.activeXpBoost;
+
+  if (
+    activeBoost &&
+    activeBoost.multiplier === 2 &&
+    activeBoost.expiresAt &&
+    activeBoost.expiresAt.toMillis() > now
+  ) {
+    multiplier = 2;
+  }
+
+  const amount = Math.max(0, Math.floor(baseAmount));
+
+  if (oldLevel >= MAX_LEVEL || amount === 0) {
+    return {
+      addedXp: 0,
+      level: oldLevel,
+      leveledUp: false
+    };
+  }
+
+  const totalXp = (player.totalXp || 0) + amount * multiplier;
+  const levelData = getLevelData(totalXp);
+
+  const playerRef = db.collection("players").doc(uid);
+
+  transaction.update(playerRef, {
+    totalXp,
+    level: levelData.level,
+    xp: levelData.xp,
+    xpToNextLevel: levelData.xpToNextLevel,
+    updatedAt: FieldValue.serverTimestamp()
+  });
+
+  // Every 10 levels grants one stored XP boost.
+  for (
+    let milestone = 10;
+    milestone <= levelData.level;
+    milestone += 10
+  ) {
+    if (milestone > oldLevel) {
+      const boostRef = db
+        .collection("boosts")
+        .doc(uid)
+        .collection("items")
+        .doc();
+
+      transaction.set(boostRef, {
+        type: "xp_boost",
+        multiplier: 2,
+        durationMinutes: 60,
+        status: "stored",
+        createdAt: FieldValue.serverTimestamp()
+      });
+    }
+  }
+
+  return {
+    addedXp: amount * multiplier,
+    level: levelData.level,
+    leveledUp: levelData.level > oldLevel,
+    totalXp
+  };
+}
+
+// ------------------------------
+// PLAYER CREATION
+// ------------------------------
+
 exports.createPlayerProfile = onUserCreated(
   { region: REGION },
   async (event) => {
@@ -51,9 +161,9 @@ exports.createPlayerProfile = onUserCreated(
       (user.displayName || "Player").trim().slice(0, 24) || "Player";
 
     await db.runTransaction(async (transaction) => {
-      const playerSnapshot = await transaction.get(playerRef);
+      const snapshot = await transaction.get(playerRef);
 
-      if (playerSnapshot.exists) return;
+      if (snapshot.exists) return;
 
       const now = FieldValue.serverTimestamp();
 
@@ -62,10 +172,13 @@ exports.createPlayerProfile = onUserCreated(
         displayName,
         level: 1,
         xp: 0,
+        totalXp: 0,
+        xpToNextLevel: 100,
         coins: 0,
         achievementsCompleted: 0,
         attendanceStreak: 0,
         lastAttendanceDay: null,
+        activeXpBoost: null,
         createdAt: now,
         updatedAt: now
       });
@@ -76,6 +189,7 @@ exports.createPlayerProfile = onUserCreated(
         avatarId: "default",
         level: 1,
         achievementsCompleted: 0,
+        totalXp: 0,
         createdAt: now,
         updatedAt: now
       });
@@ -83,16 +197,15 @@ exports.createPlayerProfile = onUserCreated(
   }
 );
 
-// Daily attendance: 50 coins.
-// Every 7 consecutive attendance days: an extra 500 coins.
+// ------------------------------
+// DAILY ATTENDANCE
+// ------------------------------
+
 exports.dailyCheckIn = onCall(
   { region: REGION },
   async (request) => {
     if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "You must sign in first."
-      );
+      throw new HttpsError("unauthenticated", "Sign in first.");
     }
 
     const uid = request.auth.uid;
@@ -120,25 +233,20 @@ exports.dailyCheckIn = onCall(
           success: true,
           alreadyCheckedIn: true,
           dailyReward: 0,
-          weeklyReward: 0,
-          message: "Attendance already recorded today."
+          weeklyReward: 0
         };
       }
 
-      const player = playerSnapshot.exists
-        ? playerSnapshot.data()
-        : {
-            uid,
-            displayName: "Player",
-            level: 1,
-            xp: 0,
-            coins: 0,
-            achievementsCompleted: 0,
-            attendanceStreak: 0,
-            lastAttendanceDay: null
-          };
+      if (!playerSnapshot.exists) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Player profile does not exist."
+        );
+      }
 
+      const player = playerSnapshot.data();
       const previousDay = player.lastAttendanceDay;
+
       let streak = 1;
 
       if (previousDay && dayDifference(previousDay, today) === 1) {
@@ -148,26 +256,13 @@ exports.dailyCheckIn = onCall(
       const dailyReward = 50;
       const weeklyReward = streak % 7 === 0 ? 500 : 0;
       const totalReward = dailyReward + weeklyReward;
-      const newCoins = (player.coins || 0) + totalReward;
 
-      const now = FieldValue.serverTimestamp();
-
-      const playerUpdates = {
-        coins: newCoins,
+      transaction.update(playerRef, {
+        coins: (player.coins || 0) + totalReward,
         attendanceStreak: streak,
         lastAttendanceDay: today,
-        updatedAt: now
-      };
-
-      if (playerSnapshot.exists) {
-        transaction.update(playerRef, playerUpdates);
-      } else {
-        transaction.set(playerRef, {
-          ...player,
-          ...playerUpdates,
-          createdAt: now
-        });
-      }
+        updatedAt: FieldValue.serverTimestamp()
+      });
 
       transaction.set(attendanceRef, {
         uid,
@@ -176,15 +271,15 @@ exports.dailyCheckIn = onCall(
         dailyReward,
         weeklyReward,
         totalReward,
-        createdAt: now
+        createdAt: FieldValue.serverTimestamp()
       });
 
       transaction.set(transactionRef, {
         type: "attendance",
+        amount: totalReward,
         dailyReward,
         weeklyReward,
-        amount: totalReward,
-        createdAt: now
+        createdAt: FieldValue.serverTimestamp()
       });
 
       return {
@@ -193,8 +288,153 @@ exports.dailyCheckIn = onCall(
         streak,
         dailyReward,
         weeklyReward,
-        totalReward,
-        newCoins
+        totalReward
+      };
+    });
+  }
+);
+
+// ------------------------------
+// ADMIN-ONLY XP GRANT
+// ------------------------------
+
+exports.adminGrantXp = onCall(
+  { region: REGION },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in first.");
+    }
+
+    const adminRef = db.collection("admins").doc(request.auth.uid);
+    const adminSnapshot = await adminRef.get();
+
+    if (
+      !adminSnapshot.exists ||
+      adminSnapshot.data().active !== true
+    ) {
+      throw new HttpsError("permission-denied", "Admin access required.");
+    }
+
+    const uid = request.data?.uid;
+    const amount = request.data?.amount;
+
+    if (
+      typeof uid !== "string" ||
+      !Number.isInteger(amount) ||
+      amount < 1 ||
+      amount > 10000
+    ) {
+      throw new HttpsError("invalid-argument", "Invalid XP request.");
+    }
+
+    const playerRef = db.collection("players").doc(uid);
+
+    return db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(playerRef);
+
+      if (!snapshot.exists) {
+        throw new HttpsError("not-found", "Player not found.");
+      }
+
+      const result = grantXpInTransaction(
+        transaction,
+        uid,
+        snapshot.data(),
+        amount
+      );
+
+      return {
+        success: true,
+        ...result
+      };
+    });
+  }
+);
+
+// ------------------------------
+// ACTIVATE STORED XP BOOST
+// ------------------------------
+
+exports.activateXpBoost = onCall(
+  { region: REGION },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in first.");
+    }
+
+    const uid = request.auth.uid;
+    const boostId = request.data?.boostId;
+
+    if (typeof boostId !== "string" || !boostId) {
+      throw new HttpsError("invalid-argument", "Invalid boost ID.");
+    }
+
+    const playerRef = db.collection("players").doc(uid);
+    const boostRef = db
+      .collection("boosts")
+      .doc(uid)
+      .collection("items")
+      .doc(boostId);
+
+    return db.runTransaction(async (transaction) => {
+      const playerSnapshot = await transaction.get(playerRef);
+      const boostSnapshot = await transaction.get(boostRef);
+
+      if (!playerSnapshot.exists || !boostSnapshot.exists) {
+        throw new HttpsError("not-found", "Player or boost not found.");
+      }
+
+      const player = playerSnapshot.data();
+      const boost = boostSnapshot.data();
+
+      if (
+        boost.type !== "xp_boost" ||
+        boost.status !== "stored"
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "This boost is not available."
+        );
+      }
+
+      const currentBoost = player.activeXpBoost;
+      const now = Date.now();
+
+      if (
+        currentBoost &&
+        currentBoost.expiresAt &&
+        currentBoost.expiresAt.toMillis() > now
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "An XP boost is already active."
+        );
+      }
+
+      const expiresAt = Timestamp.fromMillis(
+        now + XP_BOOST_DURATION
+      );
+
+      transaction.update(boostRef, {
+        status: "used",
+        activatedAt: Timestamp.fromMillis(now),
+        expiresAt
+      });
+
+      transaction.update(playerRef, {
+        activeXpBoost: {
+          multiplier: 2,
+          activatedAt: Timestamp.fromMillis(now),
+          expiresAt
+        },
+        updatedAt: FieldValue.serverTimestamp()
+      });
+
+      return {
+        success: true,
+        multiplier: 2,
+        durationMinutes: 60,
+        expiresAt: expiresAt.toDate().toISOString()
       };
     });
   }
