@@ -97,10 +97,25 @@ body,html{margin:0;padding:0;overflow:hidden;background:#0284c7;color:#fff}
 </div>
 <div style="position:fixed;bottom:4px;left:50%;transform:translateX(-50%);font-size:11px;color:#0f172a;z-index:90;pointer-events:none;font-weight:bold">© 2026 I.M.G GAMING. All Rights Reserved.</div>
 </div>
-<script src="https://cloudflare.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const allowedDomain="://blogspot.com";
-if(window.self===window.top||!document.referrer.includes(allowedDomain)){document.getElementById('lock-screen').style.display='flex';throw new Error("Locked");}
+const allowedHost = "img-gaming-official.blogspot.com";
+
+let referrerHost = "";
+
+try {
+  referrerHost = new URL(document.referrer).hostname;
+} catch (error) {
+  referrerHost = "";
+}
+
+if (
+  window.self === window.top ||
+  referrerHost !== allowedHost
+) {
+  document.getElementById("lock-screen").style.display = "flex";
+  throw new Error("Locked");
+}
 document.addEventListener('contextmenu',e=>e.preventDefault());
 
 let selectedMap='sky';
