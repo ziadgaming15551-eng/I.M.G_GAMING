@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+*{box-sizing:border-box;user-select:none;font-family:'Segoe UI',Tahoma,sans-serif}
+body,html{margin:0;padding:0;overflow:hidden;background:#0284c7;color:#fff}
+#game-container{position:relative;width:100%;height:550px;max-width:920px;margin:auto;border:3px solid #000;overflow:hidden;background:#38bdf8}
+#lock-screen{display:none;position:absolute;inset:0;background:#09090b;flex-direction:column;align-items:center;justify-content:center;z-index:100;text-align:center;padding:20px}
+.overlay{position:absolute;inset:0;background:rgba(15,23,42,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:40;padding:18px;text-align:center;overflow-y:auto}
+.hidden{display:none!important}
+.title{font-size:28px;font-weight:900;color:#facc15;text-shadow:3px 3px 0 #000;margin-bottom:8px}
+.btn{width:240px;padding:10px;margin:5px 0;font-size:15px;font-weight:800;color:#fff;background:#2563eb;border:3px solid #000;border-radius:10px;box-shadow:3px 3px 0 #000;cursor:pointer}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.btn-red{background:#dc2626}.btn-amber{background:#d97706}.btn-green{background:#16a34a}.btn-slate{background:#475569}
+.maps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:480px;margin:10px 0}
+.map-card{background:#1e293b;border:3px solid #334155;padding:10px 6px;border-radius:10px;cursor:pointer;font-size:12px}
+.map-card.selected{border-color:#facc15;background:#0f172a}
+.room-box{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:100%;max-width:420px;margin:10px 0}
+.team-slot{background:#1e293b;border:2px solid #475569;padding:8px;border-radius:8px;font-size:13px;font-weight:bold}
+#hud{position:absolute;top:8px;left:0;width:100%;padding:0 10px;display:flex;justify-content:space-between;align-items:center;z-index:20;font-size:12px;font-weight:bold;flex-wrap:wrap;gap:5px}
+.hud-box{background:rgba(0,0,0,.82);border:2px solid #000;padding:5px 10px;border-radius:8px;display:flex;gap:8px;align-items:center}
+#shop-modal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e293b;border:3px solid #000;box-shadow:5px 5px 0 #000;padding:12px;border-radius:12px;z-index:35;width:92%;max-width:380px;text-align:center}
+.shop-item{background:#0f172a;border:2px solid #334155;padding:7px;margin:5px 0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.pad-left{position:absolute;bottom:18px;left:18px;display:grid;grid-template-columns:repeat(3,52px);gap:5px;z-index:25}
+.pad-right{position:absolute;bottom:18px;right:18px;display:grid;grid-template-columns:repeat(2,62px);gap:8px;z-index:25}
+.c-btn{width:52px;height:52px;border-radius:12px;border:3px solid #000;background:rgba(30,41,59,.92);color:#fff;font-weight:900;font-size:17px;box-shadow:2px 2px 0 #000;cursor:pointer;touch-action:manipulation}
+.act-btn{width:62px;height:62px;border-radius:50%;border:3px solid #000;color:#fff;font-weight:900;font-size:11px;box-shadow:3px 3px 0 #000;cursor:pointer;touch-action:manipulation}
+#msg-banner{position:absolute;top:52px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#facc15;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:bold;z-index:20;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="game-container">
+<div id="lock-screen"><h2 style="color:#ef4444">⛔ لعبة حصرية</h2><p>تعمل هذه اللعبة داخل موقع <b>I.M.G GAMING</b> الرسمي فقط.</p></div>
+
+<div id="main-menu" class="overlay">
+<div class="title">⚔️ BED WARS: OFFICIAL 3D</div>
+<p style="color:#cbd5e1;font-size:13px;margin-bottom:8px">اختر الخريطة الرسمية (Official Map):</p>
+<div class="maps-grid">
+<div class="map-card selected" id="map-sky" onclick="selectMap('sky')">☁️<br><b>Classic Sky</b><br>السماء الكلاسيكية</div>
+<div class="map-card" id="map-desert" onclick="selectMap('desert')">🏜️<br><b>Desert Ruins</b><br>أطلال الصحراء</div>
+<div class="map-card" id="map-lava" onclick="selectMap('lava')">🌋<br><b>Lava Fortress</b><br>قلعة البراكين</div>
+</div>
+<button class="btn btn-green" onclick="startGame()">▶ لعب سريع (Official Match)</button>
+<button class="btn btn-amber" onclick="openRoomMenu()">🌐 إنشاء روم (Create Room)</button>
+</div>
+
+<div id="room-screen" class="overlay hidden">
+<div class="title" style="font-size:24px">🌐 غرفة اللعب الجماعي</div>
+<p style="font-size:14px;color:#cbd5e1">كود الغرفة للمشاركة: <b id="room-id-txt" style="color:#facc15;font-size:18px">BW-742</b></p>
+<div class="room-box" id="room-slots"></div>
+<button class="btn btn-blue" style="padding:8px;font-size:13px" onclick="addFriendToRoom()">➕ دعوة صديق / إضافة لاعب</button>
+<button class="btn btn-green" onclick="startGame()">🔥 ابدأ المباراة بالخريطة المختارة</button>
+<button class="btn btn-slate" onclick="backToMenu()">رجوع للقائمة</button>
+</div>
+
+<div id="end-screen" class="overlay hidden">
+<div class="title" id="end-title">انتصار!</div>
+<p id="end-desc" style="margin-bottom:15px"></p>
+<button class="btn" onclick="location.reload()">🔄 العودة للقائمة الرئيسية</button>
+</div>
+
+<div id="hud" class="hidden">
+<div class="hud-box">
+<span>🔵<b id="b-blue">✅</b></span><span>🔴<b id="b-red">✅</b></span><span>🟢<b id="b-green">✅</b></span><span>🟡<b id="b-yellow">✅</b></span><span>❤️<b id="hp-val">100</b></span>
+</div>
+<div class="hud-box" style="color:#facc15">
+<span>🔩<b id="iron-cnt">0</b></span><span>🪙<b id="gold-cnt">0</b></span><span>💎<b id="em-cnt">0</b></span><span>🧱<b id="block-cnt">0</b></span>
+<button onclick="toggleShop()" style="background:#d97706;color:#fff;border:2px solid #000;border-radius:6px;padding:3px 8px;font-weight:bold;cursor:pointer">🛒 متجر</button>
+</div>
+</div>
+
+<div id="msg-banner" class="hidden">اجمع الحديد من جزيرتك أو الزمرد من الجزيرة الوسطى!</div>
+
+<div id="shop-modal" class="hidden">
+<h3 style="margin:0 0 6px 0;color:#facc15">🛒 متجر التطوير (Item Shop)</h3>
+<div class="shop-item"><span>🧱 16 بلوك جسر</span><button class="btn btn-green" style="width:auto;padding:4px 10px;font-size:12px" onclick="buy('blocks')">4 🔩</button></div>
+<div class="shop-item"><span>⛏️ فأس تدمير الأسِرّة</span><button class="btn btn-amber" style="width:auto;padding:4px 10px;font-size:12px" onclick="buy('pick')">8 🔩</button></div>
+<div class="shop-item"><span>⚔️ سيف الماس الأسطوري</span><button class="btn" style="width:auto;padding:4px 10px;font-size:12px" onclick="buy('sword')">4 💎</button></div>
+<div class="shop-item"><span>🏹 قوس الأسهم البعيد</span><button class="btn btn-red" style="width:auto;padding:4px 10px;font-size:12px" onclick="buy('bow')">6 🪙</button></div>
+<button class="btn btn-red" style="width:100%;padding:7px;margin-top:6px" onclick="toggleShop()">إغلاق</button>
+</div>
+
+<div id="pad-left" class="pad-left hidden">
+<div></div><button class="c-btn" ontouchstart="setMove('f',true)" ontouchend="setMove('f',false)" onmousedown="setMove('f',true)" onmouseup="setMove('f',false)">▲</button><div></div>
+<button class="c-btn" ontouchstart="setMove('l',true)" ontouchend="setMove('l',false)" onmousedown="setMove('l',true)" onmouseup="setMove('l',false)">◀</button>
+<button class="c-btn" ontouchstart="setMove('b',true)" ontouchend="setMove('b',false)" onmousedown="setMove('b',true)" onmouseup="setMove('b',false)">▼</button>
+<button class="c-btn" ontouchstart="setMove('r',true)" ontouchend="setMove('r',false)" onmousedown="setMove('r',true)" onmouseup="setMove('r',false)">▶</button>
+</div>
+
+<div id="pad-right" class="pad-right hidden">
+<button class="act-btn" style="background:#dc2626" ontouchstart="attackAction()" onclick="attackAction()">⚔️<br>هجوم</button>
+<button class="act-btn" style="background:#16a34a" ontouchstart="placeBlock()" onclick="placeBlock()">🧱<br>بلوك</button>
+<button class="act-btn" style="background:#d97706" ontouchstart="shootArrow()" onclick="shootArrow()">🏹<br>سهم</button>
+<button class="act-btn" style="background:#2563eb" ontouchstart="jumpAction()" onclick="jumpAction()">⬆️<br>قفز</button>
+</div>
+<div style="position:fixed;bottom:4px;left:50%;transform:translateX(-50%);font-size:11px;color:#0f172a;z-index:90;pointer-events:none;font-weight:bold">© 2026 I.M.G GAMING. All Rights Reserved.</div>
+</div>
+<script src="https://cloudflare.com"></script>
+<script>
+const allowedDomain="://blogspot.com";
+if(window.self===window.top||!document.referrer.includes(allowedDomain)){document.getElementById('lock-screen').style.display='flex';throw new Error("Locked");}
+document.addEventListener('contextmenu',e=>e.preventDefault());
+
+let selectedMap='sky';
+let roomMembers=['🔵 أنت (الفريق الأزرق)','🔴 مقاتل أحمر (Bot)','🟢 مقاتل أخضر (Bot)','🟡 مقاتل أصفر (Bot)'];
+
+function selectMap(m){
+selectedMap=m;
+document.querySelectorAll('.map-card').forEach(c=>c.classList.remove('selected'));
+document.getElementById('map-'+m).classList.add('selected');
+}
+
+function openRoomMenu(){
+document.getElementById('main-menu').classList.add('hidden');
+document.getElementById('room-screen').classList.remove('hidden');
+document.getElementById('room-id-txt').innerText='BW-'+Math.floor(100+Math.random()*899);
+renderRoomSlots();
+}
+
+function backToMenu(){
+document.getElementById('room-screen').classList.add('hidden');
+document.getElementById('main-menu').classList.remove('hidden');
+}
+
+function renderRoomSlots(){
+const box=document.getElementById('room-slots');box.innerHTML='';
+roomMembers.forEach(m=>{box.innerHTML+=`<div class="team-slot">${m}</div>`});
+}
+
+function addFriendToRoom(){
+const idx=roomMembers.findIndex(m=>m.includes('(Bot)'));
+if(idx===-1)return alert('الغرفة مكتملة بالأصدقاء (4/4)!');
+const colors=['🔴 صديق أحمر','🟢 صديق أخضر','🟡 صديق أصفر'];
+roomMembers[idx]=colors[idx-1]+' (متصل)';
+renderRoomSlots();
+}
+
+const container=document.getElementById('game-container'),scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(60,container.clientWidth/container.clientHeight,0.1,120);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(container.clientWidth,container.clientHeight);container.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,0.85);sun.position.set(15,25,15);scene.add(sun);
+
+function makeBox(w,h,d,col,x,y,z){
+const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:col}));
+m.position.set(x,y,z);scene.add(m);return m;
+}
+
+const islands=[
+{id:'blue',x:0,z:18,col:0x2563eb},
+{id:'red',x:0,z:-18,col:0xdc2626},
+{id:'green',x:18,z:0,col:0x16a34a},
+{id:'yellow',x:-18,z:0,col:0xeab308}
+];
+
+let beds={},bots=[],islandMeshes=[],midMesh;
+
+function buildOfficialMap(){
+let skyCol=0x38bdf8,islCol=0x22c55e,midCol=0x64748b;
+if(selectedMap==='desert'){skyCol=0xfde047;islCol=0xd97706;midCol=0x92400e}
+if(selectedMap==='lava'){skyCol=0x1c1917;islCol=0x3f3f46;midCol=0x7f1d1d}
+scene.background=new THREE.Color(skyCol);
+scene.fog=new THREE.Fog(skyCol,20,75);
+
+midMesh=makeBox(9,1.5,9,midCol,0,-0.75,0);
+islands.forEach(isl=>{
+islandMeshes.push(makeBox(7,1.5,7,islCol,isl.x,-0.75,isl.z));
+const bz=isl.z>0?isl.z+2:(isl.z<0?isl.z-2:isl.z);
+const bx=isl.x>0?isl.x+2:(isl.x<0?isl.x-2:isl.x);
+beds[isl.id]={mesh:makeBox(1.5,0.6,1.5,isl.col,bx,0.3,bz),alive:true};
+if(isl.id!=='blue'){
+bots.push({id:isl.id,mesh:makeBox(0.8,1.6,0.8,isl.col,isl.x,0.8,isl.z),hp:100,homeX:isl.x,homeZ:isl.z});
+}
+});
+}
+
+const emGen=makeBox(1.4,0.4,1.4,0x10b981,0,0.2,0);
+const myGen=makeBox(1.2,0.3,1.2,0xfacc15,0,0.15,20.5);
+const player=makeBox(0.8,1.6,0.8,0x1d4ed8,0,0.8,16);
+let iron=0,gold=0,em=0,blocks=0,swordDmg=25,hasPick=false,hasBow=false,pHp=100,playing=false;
+let velY=0,onGround=true,move={f:false,b:false,l:false,r:false},lastDir={x:0,z:-1},bridgeBlocks=[],arrows=[];
+
+function startGame(){
+buildOfficialMap();
+document.getElementById('main-menu').classList.add('hidden');
+document.getElementById('room-screen').classList.add('hidden');
+['hud','msg-banner','pad-left','pad-right'].forEach(i=>document.getElementById(i).classList.remove('hidden'));
+playing=true;
+}
+
+function toggleShop(){document.getElementById('shop-modal').classList.toggle('hidden')}
+function showMsg(t){document.getElementById('msg-banner').innerText=t}
+
+function buy(item){
+if(item==='blocks'){if(iron<4)return showMsg("تحتاج 4 حديد!");iron-=4;blocks+=16;showMsg("اشتريت 16 بلوك!")}
+if(item==='pick'){if(iron<8)return showMsg("تحتاج 8 حديد!");iron-=8;hasPick=true;showMsg("اشتريت فأس تدمير الأسِرّة!")}
+if(item==='sword'){if(em<4)return showMsg("تحتاج 4 زمرد من الجزيرة الوسطى!");em-=4;swordDmg=55;showMsg("جهزت سيف الماس الأسطوري!")}
+if(item==='bow'){if(gold<6)return showMsg("تحتاج 6 ذهب!");gold-=6;hasBow=true;showMsg("اشتريت قوس الأسهم!")}
+updateUI();
+}
+
+function placeBlock(){
+if(!playing||blocks<=0)return showMsg("اشترِ بلوكات من المتجر 🛒");
+blocks--;updateUI();
+const bx=Math.round(player.position.x+lastDir.x*1.3);
+const bz=Math.round(player.position.z+lastDir.z*1.3);
+makeBox(1.4,0.4,1.4,0x60a5fa,bx,-0.2,bz);
+bridgeBlocks.push({x:bx,z:bz});
+}
+
+function jumpAction(){if(onGround&&playing){velY=0.22;onGround=false}}
+
+function shootArrow(){
+if(!playing)return;
+if(!hasBow)return showMsg("اشترِ القوس (6 ذهب) من المتجر أولاً!");
+const arr=makeBox(0.25,0.25,0.8,0xfacc15,player.position.x,player.position.y+0.3,player.position.z);
+arrows.push({mesh:arr,dx:lastDir.x*0.55,dz:lastDir.z*0.55,life:60});
+}
+
+function attackAction(){
+if(!playing)return;
+['red','green','yellow'].forEach(id=>{
+const b=beds[id];
+if(b&&b.alive&&player.position.distanceTo(b.mesh.position)<3.0){
+if(!hasPick)return showMsg("تحتاج لشراء الفأس ⛏️ من المتجر لكسر السرير!");
+b.alive=false;scene.remove(b.mesh);updateUI();showMsg(`🔥 دمرت سرير الفريق ${id.toUpperCase()}!`);
+}
+});
+for(let i=bots.length-1;i>=0;i--){
+const bot=bots[i];
+if(player.position.distanceTo(bot.mesh.position)<3.0){
+bot.hp-=swordDmg;bot.mesh.position.x+=lastDir.x*0.8;bot.mesh.position.z+=lastDir.z*0.8;
+showMsg(`ضربت لاعب ${bot.id}! صحته: ${Math.max(0,bot.hp)}`);
+if(bot.hp<=0){
+if(!beds[bot.id].alive){scene.remove(bot.mesh);bots.splice(i,1);showMsg(`💀 تم إقصاء الفريق ${bot.id} نهائياً!`);}
+else{bot.hp=100;bot.mesh.position.set(bot.homeX,0.8,bot.homeZ);showMsg(`عاد لاعب ${bot.id} للحياة لأن سريره سليم!`);}
+}
+}
+}
+if(bots.length===0)endGame(true,"دمرت كل الأسِرّة وقضيت على جميع الفرق!");
+}
+
+function setMove(d,v){
+move[d]=v;
+if(v){
+if(d==='f')lastDir={x:0,z:-1};
+if(d==='b')lastDir={x:0,z:1};
+if(d==='l')lastDir={x:-1,z:0};
+if(d==='r')lastDir={x:1,z:0};
+}
+}
+
+function updateUI(){
+document.getElementById('iron-cnt').innerText=iron;document.getElementById('gold-cnt').innerText=gold;
+document.getElementById('em-cnt').innerText=em;document.getElementById('block-cnt').innerText=blocks;
+document.getElementById('hp-val').innerText=Math.max(0,pHp);
+['blue','red','green','yellow'].forEach(c=>{if(beds[c])document.getElementById('b-'+c).innerText=beds[c].alive?"✅":"❌"});
+}
+
+function endGame(win,desc){playing=false;document.getElementById('end-title').innerText=win?"🏆 فوز ملكي!":"💀 خرجت من اللعبة!";document.getElementById('end-desc').innerText=desc;document.getElementById('end-screen').classList.remove('hidden')}
+
+setInterval(()=>{
+if(!playing)return;
+if(player.position.distanceTo(myGen.position)<3.5){iron+=2;gold+=1;updateUI()}
+if(player.position.distanceTo(emGen.position)<4.5){em+=1;updateUI();showMsg("💎 جمعت زمرد من الجزيرة الوسطى!")}
+},1500);
+
+setInterval(()=>{
+if(!playing)return;
+bots.forEach(bot=>{
+const dx=player.position.x-bot.mesh.position.x,dz=player.position.z-bot.mesh.position.z;
+const dist=Math.hypot(dx,dz);
+if(dist<14&&dist>2.1){bot.mesh.position.x+=(dx/dist)*0.32;bot.mesh.position.z+=(dz/dist)*0.32}
+if(dist<=2.3){
+pHp-=10;updateUI();
+if(pHp<=0){
+if(!beds.blue.alive)endGame(false,"دُمر سريرك وسقطت في المعركة!");
+else{pHp=100;player.position.set(0,0.8,16);updateUI();showMsg("عدت للحياة عند سريرك الأزرق!");}
+}
+}
+if(beds.blue&&beds.blue.alive&&bot.mesh.position.distanceTo(beds.blue.mesh.position)<2.8){
+beds.blue.alive=false;scene.remove(beds.blue.mesh);updateUI();showMsg("⚠️ تحذير: تم تدمير سريرك الأزرق!");
+}
+});
+},850);
+
+function isGround(x,z){
+if(Math.abs(x)<=4.6&&Math.abs(z)<=4.6)return true;
+for(let isl of islands){if(Math.abs(x-isl.x)<=3.6&&Math.abs(z-isl.z)<=3.6)return true}
+return bridgeBlocks.some(b=>Math.abs(b.x-x)<1.3&&Math.abs(b.z-z)<1.3);
+}
+
+function animate(){
+requestAnimationFrame(animate);
+if(playing){
+const spd=0.14;
+if(move.f)player.position.z-=spd;if(move.b)player.position.z+=spd;
+if(move.l)player.position.x-=spd;if(move.r)player.position.x+=spd;
+
+player.position.y+=velY;
+if(isGround(player.position.x,player.position.z)&&player.position.y<=0.8&&velY<=0){
+player.position.y=0.8;velY=0;onGround=true;
+}else{velY-=0.012;onGround=false}
+
+if(player.position.y<-6){
+if(!beds.blue.alive)endGame(false,"سقطت في الفراغ بعد تدمير سريرك!");
+else{player.position.set(0,0.8,16);velY=0;showMsg("سقطت في السماء! عدت لجزيرتك.");}
+}
+
+for(let i=arrows.length-1;i>=0;i--){
+const a=arrows[i];a.mesh.position.x+=a.dx;a.mesh.position.z+=a.dz;a.life--;
+let hit=false;
+for(let j=bots.length-1;j>=0;j--){
+const bot=bots[j];
+if(a.mesh.position.distanceTo(bot.mesh.position)<1.6){
+bot.hp-=35;hit=true;showMsg(`🎯 إصابة بالسهم! صحة ${bot.id}: ${Math.max(0,bot.hp)}`);
+if(bot.hp<=0&&!beds[bot.id].alive){scene.remove(bot.mesh);bots.splice(j,1);}
+break;
+}
+}
+if(hit||a.life<=0){scene.remove(a.mesh);arrows.splice(i,1);}
+}
+
+camera.position.set(player.position.x,player.position.y+6,player.position.z+7.5);
+camera.lookAt(player.position.x,player.position.y,player.position.z-2);
+emGen.rotation.y+=0.05;myGen.rotation.y+=0.05;
+}
+renderer.render(scene,camera);
+}
+animate();
+</script>
+</body>
+</html>
