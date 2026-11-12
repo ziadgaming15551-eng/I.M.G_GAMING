@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+*{box-sizing:border-box;user-select:none;font-family:'Segoe UI',Tahoma,sans-serif}
+body,html{margin:0;padding:0;overflow:hidden;background:#09090b;color:#f8fafc}
+#game-container{position:relative;width:100%;height:550px;max-width:920px;margin:auto;border:3px solid #000;overflow:hidden;background:#1c1917}
+#lock-screen{display:none;position:absolute;inset:0;background:#09090b;flex-direction:column;align-items:center;justify-content:center;z-index:100;text-align:center;padding:20px}
+.overlay-screen{position:absolute;inset:0;background:rgba(12,10,9,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:40;padding:15px;text-align:center;overflow-y:auto}
+.hidden{display:none!important}
+.comic-logo{font-size:28px;font-weight:900;color:#facc15;text-shadow:3px 3px 0 #000;margin-bottom:6px}
+.stats-bar{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
+.badge{background:#1e293b;border:2px solid #facc15;color:#facc15;padding:4px 10px;border-radius:15px;font-size:12px;font-weight:700}
+.btn-main{width:250px;padding:10px;margin:4px 0;font-size:15px;font-weight:800;color:#fff;background:#dc2626;border:3px solid #000;border-radius:10px;box-shadow:3px 3px 0 #000;cursor:pointer}
+.btn-main:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.btn-blue{background:#2563eb}.btn-amber{background:#d97706}.btn-green{background:#16a34a}.btn-slate{background:#475569}
+.comic-panel{background:#fef08a;color:#09090b;border:4px solid #000;box-shadow:6px 6px 0 #dc2626;padding:15px;border-radius:8px;max-width:500px;width:100%;text-align:left;direction:ltr;margin-bottom:12px}
+.comic-header{background:#000;color:#facc15;padding:4px 10px;font-weight:900;font-size:12px;display:inline-block;margin-bottom:8px}
+.comic-art{font-size:42px;text-align:center;background:#1c1917;padding:12px;border:3px solid #000;border-radius:6px;margin-bottom:10px}
+.comic-dialogue{font-size:15px;font-weight:700;line-height:1.4;color:#18181b}
+#hud{position:absolute;top:10px;left:0;width:100%;padding:0 12px;display:flex;justify-content:space-between;align-items:flex-start;z-index:20}
+.hp-wrap{width:39%;background:#000;padding:4px;border:2px solid #000;border-radius:6px}
+.hp-text{font-size:11px;font-weight:700;color:#facc15;display:flex;justify-content:space-between;margin-bottom:2px}
+.bar-bg{width:100%;height:11px;background:#334155;margin-bottom:3px}
+.hp-fill{height:100%;background:#22c55e;width:100%;transition:width .15s}
+.stamina-fill{height:7px;background:#facc15;width:100%;transition:width .1s}
+#enemy-hp-fill{background:#ef4444}
+#pause-btn{width:42px;height:42px;background:#1e293b;border:3px solid #000;border-radius:8px;color:#facc15;font-size:17px;font-weight:900;box-shadow:3px 3px 0 #000;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#announcer-box{position:absolute;top:65px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.88);border:2px solid #facc15;color:#facc15;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;z-index:20;white-space:nowrap}
+.side-controls{position:absolute;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:25}
+#left-pad{left:15px}#right-pad{right:15px}
+.ctrl-circle{width:65px;height:65px;border-radius:50%;border:3px solid #000;color:#fff;font-weight:900;font-size:12px;box-shadow:3px 3px 0 #000;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;text-align:center}
+.ctrl-circle:active{transform:scale(.92)}
+.c-punch{background:#dc2626}.c-block{background:#2563eb}.c-tag{background:#16a34a}
+#blood-overlay{position:absolute;inset:0;pointer-events:none;z-index:15;opacity:0;transition:opacity .15s;background:radial-gradient(circle,transparent 40%,rgba(220,38,38,.8) 100%)}
+.blood-drop{position:absolute;width:15px;height:15px;background:#b91c1c;border-radius:50% 50% 50% 0;transform:rotate(-45deg);pointer-events:none;z-index:16;animation:splat .5s forwards}
+@keyframes splat{0%{transform:scale(.3) rotate(-45deg);opacity:1}100%{transform:scale(1.5) translateY(25px) rotate(-45deg);opacity:0}}
+.grid-box{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:100%;max-width:520px;margin:8px 0}
+.item-card{background:#1e293b;border:2px solid #334155;padding:8px;border-radius:8px;text-align:center;font-size:12px}
+.room-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;max-width:460px;margin:8px 0}
+.slot{background:#1e293b;border:2px dashed #64748b;padding:8px 4px;border-radius:8px;font-size:12px}
+.slot.filled{border-style:solid;border-color:#22c55e;color:#4ade80;font-weight:700}
+</style>
+</head>
+<body>
+<div id="game-container">
+<div id="lock-screen"><h2 style="color:#ef4444">⛔ لعبة حصرية</h2><p>تعمل هذه اللعبة داخل موقع <b>I.M.G GAMING</b> الرسمي فقط.</p></div>
+<div id="blood-overlay"></div>
+
+<div id="main-menu" class="overlay-screen">
+<div class="comic-logo">🥊 BLOOD & IRON: STREET 3D</div>
+<div class="stats-bar">
+<div class="badge">⭐ المستوى: <span id="lvl-display">1</span>/60</div>
+<div class="badge">💰 <span id="coin-count">200</span></div>
+<div class="badge">👊 قوة: +<span id="dmg-bonus">0</span>%</div>
+<div class="badge">⚡ تحمل: +<span id="stam-bonus">0</span>%</div>
+</div>
+<button class="btn-main" onclick="startStoryFlow()">▶ PLAY (القصة والمراحل)</button>
+<button class="btn-main btn-green" onclick="startSideMission()">🎯 مهمة جانبية (قتال الشوارع)</button>
+<button class="btn-main btn-blue" onclick="openMultiplayer()">🌐 MULTIPLAYER (روم 6 لاعبين)</button>
+<button class="btn-main btn-amber" onclick="openScreen('store-screen')">🛍️ المتجر (قفازات وملابس)</button>
+<button class="btn-main btn-slate" onclick="openSettings('main-menu')">⚙️ الإعدادات</button>
+</div>
+
+<div id="story-screen" class="overlay-screen hidden">
+<div class="comic-panel">
+<div class="comic-header" id="comic-chapter">CHAPTER 1</div>
+<div class="comic-art" id="comic-emoji">🛋️ 📱 😨</div>
+<div class="comic-dialogue" id="comic-text"></div>
+</div>
+<button class="btn-main" onclick="nextComicStep()">التالي (NEXT) ▶</button>
+</div>
+
+<div id="mp-screen" class="overlay-screen hidden">
+<h2 style="color:#38bdf8;margin:0">غرفة القتال الجماعي (الحد الأقصى 6)</h2>
+<p style="font-size:13px;color:#cbd5e1">كود الغرفة: <b style="color:#facc15;font-size:16px">IMG-906</b></p>
+<div class="room-slots" id="room-slots"></div>
+<button class="btn-main btn-blue" style="padding:8px;font-size:14px" onclick="inviteBotFriend()">➕ إضافة صديق للروم</button>
+<button class="btn-main" onclick="launchBattle('raceway',false,false)">🔥 ابدأ القتال في استاد السباق</button>
+<button class="btn-main btn-slate" onclick="openScreen('main-menu')">رجوع</button>
+</div>
+<div id="store-screen" class="overlay-screen hidden">
+<h2 style="color:#facc15;margin:0">متجر التجهيزات القتالية</h2>
+<div class="badge" style="margin:6px 0">💰 رصيدك: <span id="store-coins">200</span></div>
+<div class="grid-box">
+<div class="item-card"><h4>🥊 قفازات مسننة</h4><p>قوة اللكمة <b>+25%</b></p><button class="btn-main" style="width:100%;padding:6px;font-size:12px" onclick="buyGlove(120,25,0xfacc15)">شراء (120 💰)</button></div>
+<div class="item-card"><h4>🥊 قفازات فولاذية</h4><p>قوة اللكمة <b>+50%</b></p><button class="btn-main btn-amber" style="width:100%;padding:6px;font-size:12px" onclick="buyGlove(250,50,0x38bdf8)">شراء (250 💰)</button></div>
+<div class="item-card"><h4>🧥 سترة مقاتل الشوارع</h4><p>التحمل <b>+30%</b></p><button class="btn-main btn-blue" style="width:100%;padding:6px;font-size:12px" onclick="buyCloth(100,30)">شراء (100 💰)</button></div>
+<div class="item-card"><h4>🦺 درع العصابة الثقيل</h4><p>التحمل <b>+60%</b></p><button class="btn-main btn-green" style="width:100%;padding:6px;font-size:12px" onclick="buyCloth(220,60)">شراء (220 💰)</button></div>
+</div>
+<button class="btn-main btn-slate" onclick="openScreen('main-menu')">رجوع</button>
+</div>
+
+<div id="settings-screen" class="overlay-screen hidden">
+<h2 style="color:#facc15">⚙️ إعدادات التحكم</h2>
+<button class="btn-main btn-blue" onclick="setControlLayout('default')">الوضع الافتراضي (يمين ويسار)</button>
+<button class="btn-main btn-amber" onclick="setControlLayout('swapped')">عكس أماكن الأزرار (لليد اليسرى)</button>
+<button class="btn-main btn-slate" onclick="closeSettings()">حفظ ورجوع</button>
+</div>
+
+<div id="pause-menu" class="overlay-screen hidden">
+<h2 style="color:#facc15">⏸️ إيقاف مؤقت</h2>
+<button class="btn-main" onclick="resumeGame()">▶ استكمال (Resume)</button>
+<button class="btn-main btn-amber" onclick="restartCurrent()">🔄 إعادة (Restart)</button>
+<button class="btn-main btn-blue" onclick="openSettings('pause-menu')">⚙️ الإعدادات</button>
+<button class="btn-main btn-slate" onclick="quitToMenu()">🏠 الرئيسية</button>
+</div>
+
+<div id="result-screen" class="overlay-screen hidden">
+<h1 id="result-title" class="comic-logo">انتصار!</h1>
+<p id="result-desc" style="font-size:15px;margin-bottom:12px"></p>
+<button class="btn-main" onclick="continueAfterWin()">المتابعة ▶</button>
+<button class="btn-main btn-slate" onclick="quitToMenu()">القائمة الرئيسية</button>
+</div>
+
+<div id="hud" class="hidden">
+<div class="hp-wrap">
+<div class="hp-text"><span id="p1-name">أنت</span><span id="p1-hp-txt">100%</span></div>
+<div class="bar-bg"><div class="hp-fill" id="p1-hp-fill"></div></div>
+<div class="bar-bg" style="height:7px;margin:0"><div class="stamina-fill" id="p1-stam-fill"></div></div>
+</div>
+<button id="pause-btn" onclick="pauseGame()">||</button>
+<div class="hp-wrap">
+<div class="hp-text"><span id="enemy-title">الخصم</span><span id="p2-hp-txt">100%</span></div>
+<div class="bar-bg"><div class="hp-fill" id="enemy-hp-fill"></div></div>
+</div>
+</div>
+
+<div id="announcer-box" class="hidden">🎙️ المعلق: استعد للقتال!</div>
+
+<div id="left-pad" class="side-controls hidden">
+<button class="ctrl-circle c-punch" ontouchstart="punch('left')" onclick="punch('left')">لكمة<br>يسار</button>
+<button class="ctrl-circle c-tag" id="tag-btn" onclick="tagFriend()">🤝 تبديل<br>صديق</button>
+</div>
+
+<div id="right-pad" class="side-controls hidden">
+<button class="ctrl-circle c-punch" ontouchstart="punch('right')" onclick="punch('right')">لكمة<br>يمين</button>
+<button class="ctrl-circle c-block" ontouchstart="setBlock(true)" ontouchend="setBlock(false)" onmousedown="setBlock(true)" onmouseup="setBlock(false)">🛡️<br>صد</button>
+</div>
+</div>
+<script src="https://cloudflare.com"></script>
+<script>
+const allowedDomain="img-gaming-official.blogspot.com";
+if(window.self===window.top||!document.referrer.includes(allowedDomain)){document.getElementById('lock-screen').style.display='flex';throw new Error("Locked");}
+
+let currentLevel=1,coins=200,punchBonusPct=0,staminaBonusPct=0,baseDamage=12,maxStamina=100,stamina=100;
+let isPaused=false,isPlaying=false,isSideQuest=false,p1Hp=100,p2Hp=100,p2MaxHp=100,isBlocking=false,friendAvailable=true,fanWaveCount=0,isBossFight=false,prevScreen='main-menu',roomPlayers=['أنت (القائد)'],comicQueue=[];
+
+const storyChapters={
+intro:[
+{ch:"PROLOGUE: THE PHONE CALL",art:"🛋️ 📱 😨",txt:"You were relaxing on your couch when an unknown number called. Suddenly, you heard your ex-girlfriend screaming in terror!"},
+{ch:"THE KIDNAPPER'S DEMAND",art:"🗣️ 📞 👶",txt:"A rough voice spoke: 'Listen carefully! You must enter the underground street fights and win EVERY match to save her. Do NOT call the police, or both she and your baby daughter die!'"},
+{ch:"TUTORIAL (LEVELS 1 - 3)",art:"🥊 ⚡ 🛡️",txt:"TUTORIAL: Tap LEFT/RIGHT buttons to punch. Watch your YELLOW STAMINA BAR under your health! Hold BLOCK to recover stamina and reduce enemy damage."}
+],
+lvl4Call:[{ch:"LEVEL 4 COMPLETED",art:"📱 🍺 🌃",txt:"Your phone rings again. The kidnapper laughs: 'Well done, fighter... You survived the streets. See you at the Bar!' *Click*"}],
+lvl20Bar:[{ch:"LEVEL 20: THE BAR OWNER",art:"🪑 🍻 🥊",txt:"You walk into the crowded bar. Everyone stares. You pull up a chair and ask the Bar Owner where the kidnapper's boss is. He laughs: 'Win my wrestling tournament first, then we talk!'"}],
+lvl20AfterBoss:[{ch:"SECRET BASEMENT",art:"🚪 🔫 💰",txt:"Defeated, the Bar Owner admits: 'I don't know where she is, but the Arms Dealer in the basement does!' You head downstairs and find an Arms Dealer surrounded by his gang. 'Beat my men and me, and I'll tell you!'"}],
+lvl30AfterBoss:[
+{ch:"THE RUSTED RED GATE",art:"🚧 👁️ 🔑",txt:"The Arms Dealer gives you a secret location and a password. You arrive at a massive rusted red iron gate. A small window slides open: 'Password?' You whisper the code. The gate slams shut behind you!"},
+{ch:"THE JUNKYARD GANG",art:"🏚️ 🚬 😠",txt:"Inside is a scrapyard full of outlaws and dealers. You ask about the gang leader. Everyone freezes. A huge outlaw stands up: 'Why are you asking?' You tell him about your kidnapped family. He smirks: 'Prove your worth in the ring!'"}
+],
+lvl40AfterBoss:[{ch:"LEVEL 40: DUSTY RACEWAY",art:"🏎️ 💨 🎙️",txt:"The outlaw leader tells you the syndicate is hosting a brutal tournament inside the abandoned Dusty Raceway Stadium. You head there as the crowd roars!"}],
+lvl50AfterBoss:[{ch:"LEVEL 50: INNER CIRCLE",art:"🔥 ⛓️ 🥊",txt:"Only 10 battles stand between you and the final boss holding your family. Every fighter from here on is a ruthless champion!"}],
+lvl60End:[{ch:"LEVEL 60: FINAL VICTORY!",art:"🏆 👨‍👩‍👧 ❤️",txt:"You conquered all 60 levels and defeated the syndicate boss! You rescued your ex-girlfriend and baby daughter safely!"}]
+};
+
+const container=document.getElementById('game-container'),scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(65,container.clientWidth/container.clientHeight,0.1,100);
+camera.position.set(0,1.8,3.5);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(container.clientWidth,container.clientHeight);container.appendChild(renderer.domElement);
+const dirLight=new THREE.DirectionalLight(0xfffbeb,1.2);dirLight.position.set(3,8,5);scene.add(dirLight);scene.add(new THREE.AmbientLight(0x888888,0.85));
+
+function addOutline(m,s=1.06){const o=new THREE.Mesh(m.geometry,new THREE.MeshBasicMaterial({color:0x000000,side:THREE.BackSide}));o.scale.multiplyScalar(s);m.add(o)}
+
+const floorMat=new THREE.MeshToonMaterial({color:0x78716c}),floor=new THREE.Mesh(new THREE.BoxGeometry(8,0.4,8),floorMat);floor.position.y=-0.2;scene.add(floor);
+const dustTrack=new THREE.Mesh(new THREE.BoxGeometry(22,0.2,22),new THREE.MeshToonMaterial({color:0x57534e}));dustTrack.position.y=-0.35;scene.add(dustTrack);
+
+const boothGroup=new THREE.Group(),boothBox=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.4,1.2),new THREE.MeshToonMaterial({color:0x334155}));boothBox.position.set(0,2.6,-4.5);addOutline(boothBox);boothGroup.add(boothBox);
+const commentator=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.8,0.5),new THREE.MeshToonMaterial({color:0xfacc15}));commentator.position.set(0,3.5,-4.5);addOutline(commentator);boothGroup.add(commentator);scene.add(boothGroup);
+
+const crowdGroup=new THREE.Group();scene.add(crowdGroup);
+const friendMesh=new THREE.Mesh(new THREE.BoxGeometry(0.7,1.6,0.5),new THREE.MeshToonMaterial({color:0x16a34a}));friendMesh.position.set(-2.5,0.8,1.2);addOutline(friendMesh);scene.add(friendMesh);
+
+const enemy=new THREE.Group(),eBodyMat=new THREE.MeshToonMaterial({color:0x3f6212}),eBody=new THREE.Mesh(new THREE.BoxGeometry(1.1,1.4,0.6),eBodyMat);eBody.position.y=0.8;addOutline(eBody);enemy.add(eBody);
+const eHead=new THREE.Mesh(new THREE.BoxGeometry(0.65,0.65,0.65),new THREE.MeshToonMaterial({color:0xd6a27e}));eHead.position.y=1.85;addOutline(eHead);enemy.add(eHead);
+const eGloveL=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.4),new THREE.MeshToonMaterial({color:0x991b1b}));eGloveL.position.set(-0.7,1.3,0.5);addOutline(eGloveL);enemy.add(eGloveL);
+const eGloveR=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.4),new THREE.MeshToonMaterial({color:0x991b1b}));eGloveR.position.set(0.7,1.3,0.5);addOutline(eGloveR);enemy.add(eGloveR);
+enemy.position.set(0,0,0.4);scene.add(enemy);
+
+const pGloveMat=new THREE.MeshToonMaterial({color:0xdc2626});
+const pGloveL=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.32,0.55),pGloveMat);pGloveL.position.set(-0.55,1.15,2.4);addOutline(pGloveL);scene.add(pGloveL);
+const pGloveR=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.32,0.55),pGloveMat);pGloveR.position.set(0.55,1.15,2.4);addOutline(pGloveR);scene.add(pGloveR);
+function setupArenaVisuals(map,boss,fan){
+while(crowdGroup.children.length>0)crowdGroup.remove(crowdGroup.children);
+boothGroup.visible=(map==='raceway'||boss);
+let bg=0x44403c,fl=0x78716c,sc=0x94a3b8;
+if(map==='streets'){bg=0x292524;fl=0x57534e;sc=0x78716c}
+else if(map==='bar'){bg=0x451a03;fl=0x78350f;sc=0xd97706}
+else if(map==='basement'){bg=0x18181b;fl=0x3f3f46;sc=0x52525b}
+else if(map==='junkyard'){bg=0x422006;fl=0x713f12;sc=0xa16207}
+else if(map==='raceway'){bg=0x57534e;fl=0xa8a29e;sc=0xd6d3d1}
+scene.background=new THREE.Color(bg);floorMat.color.setHex(fl);
+enemy.scale.set(boss?1.45:1,boss?1.35:1,boss?1.3:1);
+eBodyMat.color.setHex(boss?0x7f1d1d:(fan?0x2563eb:0x3f6212));
+for(let i=-3.2;i<=3.2;i+=1.3){if(Math.abs(i)<0.8)continue;const s=new THREE.Mesh(new THREE.BoxGeometry(0.6,1.4,0.5),new THREE.MeshToonMaterial({color:sc}));s.position.set(i,0.7,-2.5);addOutline(s);crowdGroup.add(s)}
+}
+
+function openScreen(id){
+document.querySelectorAll('.overlay-screen').forEach(s=>s.classList.add('hidden'));
+if(id)document.getElementById(id).classList.remove('hidden');
+document.getElementById('lvl-display').innerText=currentLevel;
+document.getElementById('coin-count').innerText=coins;
+document.getElementById('store-coins').innerText=coins;
+document.getElementById('dmg-bonus').innerText=punchBonusPct;
+document.getElementById('stam-bonus').innerText=staminaBonusPct;
+}
+
+function showComic(ch,cb){comicQueue=[...ch];window.afterComicCallback=cb;openScreen('story-screen');renderComicStep()}
+function renderComicStep(){if(comicQueue.length===0){if(window.afterComicCallback)window.afterComicCallback();return}const s=comicQueue.shift();document.getElementById('comic-chapter').innerText=s.ch;document.getElementById('comic-emoji').innerText=s.art;document.getElementById('comic-text').innerText=s.txt}
+function nextComicStep(){renderComicStep()}
+
+function startStoryFlow(){isSideQuest=false;if(currentLevel===1)showComic(storyChapters.intro,()=>prepareLevelBattle());else if(currentLevel===20)showComic(storyChapters.lvl20Bar,()=>prepareLevelBattle());else prepareLevelBattle()}
+function startSideMission(){isSideQuest=true;let m='streets',l="🎙️ مهمة جانبية: قتال فتيان الشوارع!";if(currentLevel>=11&&currentLevel<=20){m='bar';l="🎙️ مهمة جانبية: زقاق البار!"}else if(currentLevel>=21&&currentLevel<=30){m='basement';l="🎙️ مهمة جانبية: حراس البدروم!"}else if(currentLevel>=31){m='junkyard';l="🎙️ مهمة جانبية: عصابات الخردوات!"}launchBattle(m,false,false);document.getElementById('announcer-box').innerText=l}
+function prepareLevelBattle(){let m='streets';if(currentLevel>=11&&currentLevel<=20)m='bar';else if(currentLevel>=21&&currentLevel<=30)m='basement';else if(currentLevel>=31)m='junkyard';if(currentLevel%5===0&&currentLevel%10!==0)m='raceway';isBossFight=(currentLevel%10===0);fanWaveCount=isBossFight?3:0;launchBattle(m,isBossFight,false)}
+
+function launchBattle(map,boss,fan){
+setupArenaVisuals(map,boss,fan);p1Hp=100;maxStamina=100+staminaBonusPct;stamina=maxStamina;p2MaxHp=boss?(180+currentLevel*3):(fan?65:(90+currentLevel*2));p2Hp=p2MaxHp;friendAvailable=true;
+document.getElementById('p1-name').innerText=isSideQuest?"مهمة جانبية":`أنت (LVL ${currentLevel})`;
+document.getElementById('enemy-title').innerText=boss?"💀 زعيم العصابة (BOSS)":(fan?"😡 مشجع غاضب!":`مقاتل LVL ${currentLevel}`);
+document.getElementById('tag-btn').style.opacity='1';friendMesh.visible=true;
+const ann=document.getElementById('announcer-box');ann.classList.remove('hidden');
+if(map==='raceway')ann.innerText="🎙️ المعلق من الكبينة: أهلاً بكم في استاد السباق المترب!";
+else if(boss)ann.innerText="🎙️ المعلق: احذر! زعيم العصابة الضخم دخل الحلبة!";
+else if(fan)ann.innerText=`🎙️ المعلق: اقتحموا الحلبة! مشجع متبقي: ${fanWaveCount}`;
+else ann.innerText=`🎙️ المعلق: الجولة ${currentLevel} - قاتل من أجل عائلتك!`;
+updateBarsUI();openScreen(null);['hud','left-pad','right-pad'].forEach(i=>document.getElementById(i).classList.remove('hidden'));isPlaying=true;isPaused=false;
+}
+
+function buyGlove(c,b,col){if(coins<c)return alert("عملاتك غير كافية!");coins-=c;punchBonusPct+=b;pGloveMat.color.setHex(col);openScreen('store-screen');alert(`تم الشراء! قوة اللكمة +${b}%`)}
+function buyCloth(c,b){if(coins<c)return alert("عملاتك غير كافية!");coins-=c;staminaBonusPct+=b;openScreen('store-screen');alert(`تم الشراء! التحمل +${b}%`)}
+
+function punch(h){
+if(!isPlaying||isPaused||isBlocking)return;
+if(stamina<12){document.getElementById('announcer-box').innerText="⚠️ نفد التحمل! انتظر أو صد ليشحن!";return}
+stamina=Math.max(0,stamina-12);const g=h==='left'?pGloveL:pGloveR;g.position.z=1.2;setTimeout(()=>g.position.z=2.4,150);
+p2Hp=Math.max(0,p2Hp-Math.round(baseDamage*(1+punchBonusPct/100)));triggerBlood(false);enemy.position.z=0.1;setTimeout(()=>enemy.position.z=0.4,130);updateBarsUI();checkCombatEnd();
+}
+
+function setBlock(s){isBlocking=s;pGloveL.position.set(s?-0.22:-0.55,s?1.45:1.15,2.4);pGloveR.position.set(s?0.22:0.55,s?1.45:1.15,2.4)}
+function tagFriend(){if(!friendAvailable||!isPlaying||isPaused)return;friendAvailable=false;friendMesh.visible=false;p1Hp=100;stamina=maxStamina;document.getElementById('p1-name').innerText="صديقك (دخل الحلبة!)";document.getElementById('tag-btn').style.opacity='0.4';updateBarsUI()}
+
+function triggerBlood(hit){
+if(hit){const o=document.getElementById('blood-overlay');o.style.opacity='1';setTimeout(()=>o.style.opacity='0',200)}
+for(let i=0;i<6;i++){const d=document.createElement('div');d.className='blood-drop';d.style.left=(35+Math.random()*30)+'%';d.style.top=(25+Math.random()*30)+'%';container.appendChild(d);setTimeout(()=>d.remove(),550)}
+}
+
+setInterval(()=>{if(!isPlaying||isPaused)return;stamina=Math.min(maxStamina,stamina+(isBlocking?14:8));updateBarsUI()},500);
+setInterval(()=>{if(!isPlaying||isPaused)return;const g=Math.random()>0.5?eGloveL:eGloveR;g.position.z=1.8;setTimeout(()=>g.position.z=0.5,170);const d=isBlocking?2:(isBossFight?14:9);p1Hp=Math.max(0,p1Hp-d);if(!isBlocking)triggerBlood(true);updateBarsUI();checkCombatEnd()},1350);
+
+function updateBarsUI(){document.getElementById('p1-hp-fill').style.width=p1Hp+'%';document.getElementById('p1-hp-txt').innerText=p1Hp+'%';document.getElementById('p1-stam-fill').style.width=Math.round((stamina/maxStamina)*100)+'%';const e=Math.round((p2Hp/p2MaxHp)*100);document.getElementById('enemy-hp-fill').style.width=e+'%';document.getElementById('p2-hp-txt').innerText=e+'%'}
+
+function checkCombatEnd(){
+if(p1Hp<=0){isPlaying=false;document.getElementById('result-title').innerText="💀 لقد سقطت!";document.getElementById('result-desc').innerText="طور قفازاتك أو حاول مرة أخرى!";openScreen('result-screen');return}
+if(p2Hp<=0){
+if(isBossFight&&fanWaveCount>0){isBossFight=false;alert("🎙️ الحكم بالميكروفون: هُزم الزعيم! أيها المشجعون، اقتحموا الحلبة!");launchBattle('raceway',false,true);return}
+if(fanWaveCount>1){fanWaveCount--;launchBattle('raceway',false,true);return}
+isPlaying=false;const r=isSideQuest?50:(currentLevel%10===0?150:75);coins+=r;document.getElementById('result-title').innerText="🏆 انتصار!";document.getElementById('result-desc').innerText=`ربحت ${r} عملة ذهبية!`;openScreen('result-screen');
+}
+}
+
+function continueAfterWin(){
+if(isSideQuest){quitToMenu();return}const f=currentLevel;if(currentLevel<60)currentLevel++;
+if(f===4)showComic(storyChapters.lvl4Call,()=>prepareLevelBattle());
+else if(f===20)showComic(storyChapters.lvl20AfterBoss,()=>prepareLevelBattle());
+else if(f===30)showComic(storyChapters.lvl30AfterBoss,()=>prepareLevelBattle());
+else if(f===40)showComic(storyChapters.lvl40AfterBoss,()=>prepareLevelBattle());
+else if(f===50)showComic(storyChapters.lvl50AfterBoss,()=>prepareLevelBattle());
+else if(f===60)showComic(storyChapters.lvl60End,()=>quitToMenu());
+else prepareLevelBattle();
+}
+
+function openSettings(f){prevScreen=f;openScreen('settings-screen')}
+function closeSettings(){openScreen(prevScreen)}
+function setControlLayout(t){const l=document.getElementById('left-pad'),r=document.getElementById('right-pad');if(t==='swapped'){l.style.left='auto';l.style.right='15px';r.style.right='auto';r.style.left='15px'}else{l.style.right='auto';l.style.left='15px';r.style.left='auto';r.style.right='15px'}alert('تم حفظ أماكن الأزرار!')}
+function openMultiplayer(){openScreen('mp-screen');renderSlots()}
+function renderSlots(){const b=document.getElementById('room-slots');b.innerHTML='';for(let i=0;i<6;i++){const p=roomPlayers[i];b.innerHTML+=`<div class="slot ${p?'filled':''}">${p?'👤 '+p:'فارغ ('+(i+1)+')'}</div>`}}
+function inviteBotFriend(){if(roomPlayers.length>=6)return alert('الحد الأقصى 6 لاعبين!');roomPlayers.push('صديق #'+roomPlayers.length);renderSlots()}
+function pauseGame(){isPaused=true;openScreen('pause-menu')}
+function resumeGame(){isPaused=false;openScreen(null)}
+function restartCurrent(){isSideQuest?startSideMission():prepareLevelBattle()}
+function quitToMenu(){isPlaying=false;['hud','left-pad','right-pad','announcer-box'].forEach(i=>document.getElementById(i).classList.add('hidden'));openScreen('main-menu')}
+
+function animate(){requestAnimationFrame(animate);if(isPlaying&&!isPaused){enemy.position.x=Math.sin(Date.now()*0.003)*0.3;commentator.rotation.y=Math.sin(Date.now()*0.004)*0.4;crowdGroup.children.forEach((c,i)=>{c.position.y=0.7+Math.abs(Math.sin(Date.now()*0.006+i))*0.18})}renderer.render(scene,camera)}
+animate();
+</script>
+  <!-- شريط حقوق النشر الرسمي داخل شاشة اللعبة -->
+<div style="position:fixed; bottom:4px; left:50%; transform:translateX(-50%); font-size:11px; color:#94a3b8; z-index:90; pointer-events:none; text-shadow:1px 1px 0 #000; white-space:nowrap;">
+  © 2026 I.M.G GAMING. All Rights Reserved.
+</div>
+<script>
+  // منع النقر الأيمن واختصارات فحص الكود (Inspect / View Source)
+  document.addEventListener('contextmenu', event => event.preventDefault());
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' || 
+       (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+       (e.ctrlKey && e.key === 'U')) {
+      e.preventDefault();
+    }
+  });
+</script>
+</body>
+</html>
