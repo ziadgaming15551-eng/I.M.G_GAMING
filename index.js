@@ -1,5 +1,6 @@
 const { onUserCreated } = require("firebase-functions/v2/identity");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { randomBytes, createHash } = require("node:crypto");
 const { initializeApp } = require("firebase-admin/app");
 const {
   getFirestore,
@@ -435,6 +436,245 @@ exports.activateXpBoost = onCall(
         multiplier: 2,
         durationMinutes: 60,
         expiresAt: expiresAt.toDate().toISOString()
+      };
+    });
+  }
+);
+
+// ==========================================
+// I.M.G GAMING - SECURE REDEEM CODE SYSTEM
+// ==========================================
+
+const ALLOWED_COIN_REWARDS = [100, 250, 500, 1000, 2000, 5000];
+
+function hashRedeemCode(code) {
+  return createHash("sha256")
+    .update(code.trim().toUpperCase())
+    .digest("hex");
+}
+
+async function verifyAdmin(uid) {
+  const snapshot = await db.collection("admins").doc(uid).get();
+
+  if (!snapshot.exists || snapshot.data().active !== true) {
+    throw new HttpsError("permission-denied", "Admin access required.");
+  }
+}
+
+// ADMIN: CREATE A SINGLE-USE CODE
+exports.adminCreateRedeemCode = onCall(
+  { region: REGION },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in first.");
+    }
+
+    await verifyAdmin(request.auth.uid);
+
+    const data = request.data || {};
+    const type = data.type;
+
+    if (!["coins", "xp_boost", "coins_boost"].includes(type)) {
+      throw new HttpsError("invalid-argument", "Invalid code type.");
+    }
+
+    let reward = {};
+
+    if (type === "coins") {
+      const amount = data.amount;
+
+      if (!ALLOWED_COIN_REWARDS.includes(amount)) {
+        throw new HttpsError("invalid-argument", "Invalid coin amount.");
+      }
+
+      reward = { amount };
+    } else {
+      const durationHours = data.durationHours;
+
+      if (
+        !Number.isInteger(durationHours) ||
+        durationHours < 1 ||
+        durationHours > 24
+      ) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Boost duration must be between 1 and 24 hours."
+        );
+      }
+
+      reward = {
+        multiplier: 2,
+        durationHours
+      };
+    }
+
+    const code =
+      "IMG-" + randomBytes(5).toString("hex").toUpperCase();
+
+    const codeHash = hashRedeemCode(code);
+    const codeRef = db.collection("redeemCodes").doc(codeHash);
+
+    await db.runTransaction(async (transaction) => {
+      transaction.create(codeRef, {
+        type,
+        ...reward,
+        used: false,
+        usedBy: null,
+        createdBy: request.auth.uid,
+        createdAt: FieldValue.serverTimestamp()
+      });
+
+      const logRef = db.collection("adminLogs").doc();
+
+      transaction.set(logRef, {
+        adminUid: request.auth.uid,
+        action: "create_redeem_code",
+        codeType: type,
+        createdAt: FieldValue.serverTimestamp()
+      });
+    });
+
+    // The plain code is returned only once.
+    return {
+      success: true,
+      code,
+      type,
+      ...reward
+    };
+  }
+);
+
+// PLAYER: REDEEM A SINGLE-USE CODE
+exports.redeemStoreCode = onCall(
+  { region: REGION },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in first.");
+    }
+
+    const uid = request.auth.uid;
+    const rawCode = request.data?.code;
+
+    if (
+      typeof rawCode !== "string" ||
+      rawCode.trim().length < 8 ||
+      rawCode.trim().length > 40
+    ) {
+      throw new HttpsError("invalid-argument", "Invalid code.");
+    }
+
+    const codeHash = hashRedeemCode(rawCode);
+    const codeRef = db.collection("redeemCodes").doc(codeHash);
+    const playerRef = db.collection("players").doc(uid);
+
+    const inventoryRef = db
+      .collection("inventory")
+      .doc(uid)
+      .collection("items")
+      .doc();
+
+    const transactionRef = db
+      .collection("transactions")
+      .doc(uid)
+      .collection("items")
+      .doc();
+
+    return db.runTransaction(async (transaction) => {
+      const codeSnapshot = await transaction.get(codeRef);
+      const playerSnapshot = await transaction.get(playerRef);
+
+      if (!codeSnapshot.exists) {
+        throw new HttpsError("not-found", "Code not found.");
+      }
+
+      if (!playerSnapshot.exists) {
+        throw new HttpsError("failed-precondition", "Player profile missing.");
+      }
+
+      const codeData = codeSnapshot.data();
+
+      if (codeData.used === true) {
+        throw new HttpsError(
+          "already-exists",
+          "This code has already been redeemed."
+        );
+      }
+
+      const now = FieldValue.serverTimestamp();
+      const player = playerSnapshot.data();
+
+      if (codeData.type === "coins") {
+        const amount = codeData.amount;
+
+        if (!ALLOWED_COIN_REWARDS.includes(amount)) {
+          throw new HttpsError(
+            "failed-precondition",
+            "Invalid reward configuration."
+          );
+        }
+
+        transaction.update(playerRef, {
+          coins: (player.coins || 0) + amount,
+          updatedAt: now
+        });
+
+        transaction.set(transactionRef, {
+          type: "redeem_code",
+          amount,
+          createdAt: now
+        });
+      } else if (
+        codeData.type === "xp_boost" ||
+        codeData.type === "coins_boost"
+      ) {
+        const durationHours = codeData.durationHours;
+
+        if (
+          !Number.isInteger(durationHours) ||
+          durationHours < 1 ||
+          durationHours > 24 ||
+          codeData.multiplier !== 2
+        ) {
+          throw new HttpsError(
+            "failed-precondition",
+            "Invalid boost configuration."
+          );
+        }
+
+        transaction.set(inventoryRef, {
+          type: codeData.type,
+          multiplier: 2,
+          durationHours,
+          durationMinutes: durationHours * 60,
+          status: "stored",
+          source: "redeem_code",
+          createdAt: now
+        });
+
+        transaction.set(transactionRef, {
+          type: "redeem_code",
+          rewardType: codeData.type,
+          durationHours,
+          createdAt: now
+        });
+      } else {
+        throw new HttpsError(
+          "failed-precondition",
+          "Unsupported code reward."
+        );
+      }
+
+      transaction.update(codeRef, {
+        used: true,
+        usedBy: uid,
+        usedAt: now
+      });
+
+      return {
+        success: true,
+        rewardType: codeData.type,
+        amount: codeData.type === "coins" ? codeData.amount : null,
+        message: "Code redeemed successfully."
       };
     });
   }
