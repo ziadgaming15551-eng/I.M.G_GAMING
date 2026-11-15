@@ -1,0 +1,2775 @@
+{
+  "schemaVersion": 1,
+  "project": "I.M.G GAMING",
+  "locale": "ar",
+  "baseAchievementCount": 150,
+  "secretAchievementCount": 1,
+  "rarityDistribution": {
+    "Common": 60,
+    "Uncommon": 40,
+    "Rare": 25,
+    "Epic": 15,
+    "Legendary": 10
+  },
+  "rewardPolicy": {
+    "Common": {
+      "xp": 20,
+      "coins": 50
+    },
+    "Uncommon": {
+      "xp": 40,
+      "coins": 100
+    },
+    "Rare": {
+      "xp": 80,
+      "coins": 200
+    },
+    "Epic": {
+      "xp": 150,
+      "coins": 350
+    },
+    "Legendary": {
+      "xp": 300,
+      "coins": 700
+    },
+    "levelCap": 100,
+    "atLevelCap": "XP is not added; coin rewards remain"
+  },
+  "eventSecurity": {
+    "clientEventsAreUntrusted": true,
+    "serverMustValidateSessionAndEvent": true,
+    "deduplicateByEventId": true,
+    "botsDoNotCountAsHumanPlayers": true,
+    "unsupportedEventsMustNotGrantProgress": true
+  },
+  "achievements": [
+    {
+      "id": "IMG-A001",
+      "title": "أول دخول",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "site_login",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A002",
+      "title": "عضو جديد",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "profile_completed",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A003",
+      "title": "اسمك معروف",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "display_name_set",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A004",
+      "title": "صورتك تميزك",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "avatar_equipped",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A005",
+      "title": "الحضور الأول",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "daily_checkin",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A006",
+      "title": "أسبوع من الالتزام",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "attendance_streak",
+        "metric": "max",
+        "target": 7
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A007",
+      "title": "شهر من الحضور",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "daily_checkin",
+        "metric": "count",
+        "target": 30
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A008",
+      "title": "جامع العملات",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "coins_earned",
+        "metric": "sum",
+        "target": 500
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A009",
+      "title": "رصيد متزايد",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "coins_earned",
+        "metric": "sum",
+        "target": 2500
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A010",
+      "title": "ثروة اللاعب",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "coins_earned",
+        "metric": "sum",
+        "target": 10000
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A011",
+      "title": "بداية التقدم",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "player_level",
+        "metric": "max",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A012",
+      "title": "لاعب متطور",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "player_level",
+        "metric": "max",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A013",
+      "title": "نخبة المستويات",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "player_level",
+        "metric": "max",
+        "target": 25
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A014",
+      "title": "قمة التقدم",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "player_level",
+        "metric": "max",
+        "target": 50
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A015",
+      "title": "أسطورة المستويات",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "player_level",
+        "metric": "max",
+        "target": 100
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A016",
+      "title": "صديق جديد",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "friend_added",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A017",
+      "title": "دائرة الأصدقاء",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "friend_added",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A018",
+      "title": "مجتمع اللاعبين",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "friend_added",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A019",
+      "title": "أول عنصر",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "store_item_acquired",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A020",
+      "title": "متسوق نشيط",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "unique_store_items_acquired",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A021",
+      "title": "مقتني الخلفيات",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "background_owned",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A022",
+      "title": "إطلالة جديدة",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "frame_owned",
+        "metric": "count",
+        "target": 2
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A023",
+      "title": "مفضلاتي",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "favorite_added",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A024",
+      "title": "تفعيل القوة",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "xp_boost_activated",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A025",
+      "title": "إنجازاتي بدأت",
+      "description": "أنجز المطلوب في حسابك أو في موقع I.M.G GAMING.",
+      "category": "site_account",
+      "rarity": "Common",
+      "scope": "site",
+      "condition": {
+        "event": "achievements_completed",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "server_supported"
+    },
+    {
+      "id": "IMG-A026",
+      "title": "أول انتصار",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A027",
+      "title": "فائز خمس مرات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A028",
+      "title": "عشر انتصارات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A029",
+      "title": "بطل عشرين مباراة",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 20
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A030",
+      "title": "نجم المنافسة",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 50
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A031",
+      "title": "مئة انتصار",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A032",
+      "title": "انتصارات متنوعة",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_won",
+        "metric": "count",
+        "target": 2
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A033",
+      "title": "مستكشف الانتصارات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_won",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A034",
+      "title": "بطل متعدد الألعاب",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_won",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A035",
+      "title": "سلسلة فوز 2",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "win_streak",
+        "metric": "max",
+        "target": 2
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A036",
+      "title": "سلسلة فوز 3",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "win_streak",
+        "metric": "max",
+        "target": 3
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A037",
+      "title": "سلسلة فوز 5",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "win_streak",
+        "metric": "max",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A038",
+      "title": "سلسلة فوز 10",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "win_streak",
+        "metric": "max",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A039",
+      "title": "فائز في الجولات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "round_won",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A040",
+      "title": "خبير الجولات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "round_won",
+        "metric": "count",
+        "target": 50
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A041",
+      "title": "حاسم المواجهات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A042",
+      "title": "لا تستسلم",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "win_after_loss",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A043",
+      "title": "عودة قوية",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "win_after_loss",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A044",
+      "title": "بطل الساحات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "competitive_win",
+        "metric": "count",
+        "target": 25
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A045",
+      "title": "قائد الفرق",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "team_match_won",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A046",
+      "title": "حامي القاعدة",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "base_defense_win",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A047",
+      "title": "صائد الأهداف",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_objective_completed",
+        "metric": "count",
+        "target": 20
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A048",
+      "title": "متعدد المهارات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_win_objectives",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A049",
+      "title": "موسم ناجح",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "season_win",
+        "metric": "count",
+        "target": 30
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A050",
+      "title": "الانتصار الكبير",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 250
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A051",
+      "title": "متخصص في الفوز",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "single_game_wins",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A052",
+      "title": "فوز بلا توقف",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "cross_game_win_streak",
+        "metric": "max",
+        "target": 7
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A053",
+      "title": "منافس محترم",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_completed",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A054",
+      "title": "لاعب البطولة",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "tournament_completed",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A055",
+      "title": "سيد الانتصارات",
+      "description": "حقق الهدف في مباريات موثقة من أي لعبة تدعم هذا الحدث.",
+      "category": "wins_competition",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_won",
+        "metric": "count",
+        "target": 500
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A056",
+      "title": "ضربة موفقة",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "successful_hit",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A057",
+      "title": "دقة التصويب",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "successful_hit",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A058",
+      "title": "عين الصقر",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "precision_hit",
+        "metric": "count",
+        "target": 50
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A059",
+      "title": "مدافع بارع",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "attack_blocked",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A060",
+      "title": "درع فولاذي",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Common",
+      "scope": "cross_game",
+      "condition": {
+        "event": "attack_blocked",
+        "metric": "count",
+        "target": 50
+      },
+      "reward": {
+        "xp": 20,
+        "coins": 50
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A061",
+      "title": "قفزة ناجحة",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "jump_performed",
+        "metric": "count",
+        "target": 20
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A062",
+      "title": "بناء سريع",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "building_placed",
+        "metric": "count",
+        "target": 50
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A063",
+      "title": "مهندس الجسور",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "bridge_piece_placed",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A064",
+      "title": "مقاتل صامد",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_completed_without_elimination",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A065",
+      "title": "نجاة صعبة",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_completed_without_elimination",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A066",
+      "title": "دون خسارة جولة",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "perfect_match_win",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A067",
+      "title": "أداء مثالي",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "perfect_match_win",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A068",
+      "title": "سرعة الإنجاز",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "timed_stage_completed",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A069",
+      "title": "رد فعل سريع",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "successful_dodge_or_parry",
+        "metric": "count",
+        "target": 20
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A070",
+      "title": "خبير المراوغة",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "successful_dodge_or_parry",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A071",
+      "title": "ضربة قاضية",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "finisher_used",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A072",
+      "title": "سلسلة مهارات",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "combo_best_length",
+        "metric": "max",
+        "target": 10
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A073",
+      "title": "كومبو محترف",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "combo_best_length",
+        "metric": "max",
+        "target": 20
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A074",
+      "title": "صياد الزعماء",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "boss_defeated",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A075",
+      "title": "قاهر الزعماء",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "boss_defeated",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A076",
+      "title": "جامع الإقصاءات",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "enemy_defeated",
+        "metric": "count",
+        "target": 25
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A077",
+      "title": "مقاتل دقيق",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "enemy_defeated",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A078",
+      "title": "لاعب تكتيكي",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_tactics_used",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A079",
+      "title": "احتراف التوقيت",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "perfect_timed_action",
+        "metric": "count",
+        "target": 25
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A080",
+      "title": "سيد المهارة",
+      "description": "حقق إنجاز المهارة في لعبة تدعم هذا النوع من الأداء.",
+      "category": "skill_performance",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "high_performance_result",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A081",
+      "title": "أول خريطة",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "map_played",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A082",
+      "title": "مستكشف الخرائط",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_maps_played",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A083",
+      "title": "رحّالة الخرائط",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_maps_played",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A084",
+      "title": "أول مرحلة",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "stage_completed",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A085",
+      "title": "متابع القصة",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "story_stage_completed",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A086",
+      "title": "نهاية الفصل",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "story_stage_completed",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A087",
+      "title": "رحلة كاملة",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "game_story_completed",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A088",
+      "title": "قصص متعددة",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_game_stories_completed",
+        "metric": "count",
+        "target": 2
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A089",
+      "title": "مستكشف الألعاب",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_played",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A090",
+      "title": "عاشق التنوع",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_played",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A091",
+      "title": "كل الأنواع",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_genres_played",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A092",
+      "title": "باحث الأسرار",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "secret_discovered",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A093",
+      "title": "صياد الأسرار",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "secret_discovered",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A094",
+      "title": "أول مهمة جانبية",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "side_mission_completed",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A095",
+      "title": "مهام جانبية كثيرة",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "side_mission_completed",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A096",
+      "title": "مكتشف المحتوى",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "content_unlocked",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A097",
+      "title": "زائر دائم",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_play_days",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A098",
+      "title": "أسبوع ألعاب",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_play_days",
+        "metric": "count",
+        "target": 7
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A099",
+      "title": "مغامر متعدد",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_with_stage_completion",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A100",
+      "title": "متمم المراحل",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Uncommon",
+      "scope": "cross_game",
+      "condition": {
+        "event": "stage_completed",
+        "metric": "count",
+        "target": 50
+      },
+      "reward": {
+        "xp": 40,
+        "coins": 100
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A101",
+      "title": "خبير الاستكشاف",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "location_discovered",
+        "metric": "count",
+        "target": 20
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A102",
+      "title": "مستكشف الأطوار",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_modes_played",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A103",
+      "title": "رحلة طويلة",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "stage_or_mission_completed",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A104",
+      "title": "مكتمل المحتوى",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "game_completion_percent",
+        "metric": "max",
+        "target": 100
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A105",
+      "title": "المستكشف الأسطوري",
+      "description": "استكشف أو أكمل المحتوى في الألعاب التي تدعم تتبعه.",
+      "category": "exploration_completion",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_completed",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A106",
+      "title": "جامع الموارد",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "resource_collected",
+        "metric": "sum",
+        "target": 100
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A107",
+      "title": "مخزون كبير",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "resource_collected",
+        "metric": "sum",
+        "target": 500
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A108",
+      "title": "ثروة الموارد",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "resource_collected",
+        "metric": "sum",
+        "target": 2000
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A109",
+      "title": "أول ترقية",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "upgrade_acquired",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A110",
+      "title": "متطور",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "upgrade_acquired",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A111",
+      "title": "خبير التطوير",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "upgrade_acquired",
+        "metric": "count",
+        "target": 20
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A112",
+      "title": "أول عنصر نادر",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "rare_item_acquired",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A113",
+      "title": "جامع العناصر",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "unique_items_acquired",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A114",
+      "title": "مجموعة مميزة",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "unique_items_acquired",
+        "metric": "count",
+        "target": 25
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A115",
+      "title": "ترسانة متنوعة",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_item_types_owned",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A116",
+      "title": "متجر اللعبة",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "in_game_purchase",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A117",
+      "title": "باني محترف",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "building_placed",
+        "metric": "count",
+        "target": 250
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A118",
+      "title": "صائد الجواهر",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "rare_resource_collected",
+        "metric": "sum",
+        "target": 25
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A119",
+      "title": "صانع المعدات",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "item_crafted",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A120",
+      "title": "خبير الصناعة",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "item_crafted",
+        "metric": "count",
+        "target": 50
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A121",
+      "title": "مقتني المجموعات",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "item_set_completed",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A122",
+      "title": "جامع المجموعات",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "item_set_completed",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A123",
+      "title": "ترقية قصوى",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "upgrade_maxed",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A124",
+      "title": "تجهيز متكامل",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "loadout_completed",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A125",
+      "title": "كنز اللاعب",
+      "description": "اجمع أو طوّر العناصر في لعبة تدعم تسجيل هذا الحدث.",
+      "category": "collection_upgrade",
+      "rarity": "Rare",
+      "scope": "cross_game",
+      "condition": {
+        "event": "unique_items_across_games",
+        "metric": "count",
+        "target": 100
+      },
+      "reward": {
+        "xp": 80,
+        "coins": 200
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A126",
+      "title": "عشر دقائق لعب",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "active_play_minutes",
+        "metric": "sum",
+        "target": 10
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A127",
+      "title": "ساعة لعب",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "active_play_minutes",
+        "metric": "sum",
+        "target": 60
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A128",
+      "title": "خمس ساعات",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "active_play_minutes",
+        "metric": "sum",
+        "target": 300
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A129",
+      "title": "عشر ساعات",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "active_play_minutes",
+        "metric": "sum",
+        "target": 600
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A130",
+      "title": "لاعب منتظم",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_play_days",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A131",
+      "title": "لاعب مستمر",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_play_days",
+        "metric": "count",
+        "target": 30
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A132",
+      "title": "جلسة طويلة",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "active_session_minutes",
+        "metric": "max",
+        "target": 30
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A133",
+      "title": "جلسة ماراثونية",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "active_session_minutes",
+        "metric": "max",
+        "target": 60
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A134",
+      "title": "تحدٍ مكتمل",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "challenge_completed",
+        "metric": "count",
+        "target": 1
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A135",
+      "title": "متحدٍ نشيط",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "challenge_completed",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A136",
+      "title": "خبير التحديات",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "challenge_completed",
+        "metric": "count",
+        "target": 50
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A137",
+      "title": "هدف يومي",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "daily_game_objectives_completed",
+        "metric": "max",
+        "target": 3
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A138",
+      "title": "يوم مثمر",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "daily_game_objectives_completed",
+        "metric": "max",
+        "target": 5
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A139",
+      "title": "سلسلة إنجاز",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "achievement_days_streak",
+        "metric": "max",
+        "target": 3
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A140",
+      "title": "إنجازات متتالية",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Epic",
+      "scope": "cross_game",
+      "condition": {
+        "event": "achievement_days_streak",
+        "metric": "max",
+        "target": 7
+      },
+      "reward": {
+        "xp": 150,
+        "coins": 350
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A141",
+      "title": "مقاوم الخسارة",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "match_completed_after_loss",
+        "metric": "count",
+        "target": 10
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A142",
+      "title": "تنوع يومي",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_in_day",
+        "metric": "max",
+        "target": 2
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A143",
+      "title": "يوم متعدد الألعاب",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "distinct_games_in_day",
+        "metric": "max",
+        "target": 3
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A144",
+      "title": "تحدي بلا توقف",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "consecutive_objectives_completed",
+        "metric": "count",
+        "target": 5
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A145",
+      "title": "المثابرة",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "challenge_completed",
+        "metric": "count",
+        "target": 25
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A146",
+      "title": "لاعب مخضرم",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "active_play_minutes",
+        "metric": "sum",
+        "target": 1000
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A147",
+      "title": "مخضرم متعدد الألعاب",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "games_with_100_active_minutes",
+        "metric": "count",
+        "target": 3
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A148",
+      "title": "سلسلة أسبوعية",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "play_day_streak",
+        "metric": "max",
+        "target": 7
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A149",
+      "title": "سلسلة شهرية",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "play_day_streak",
+        "metric": "max",
+        "target": 30
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    },
+    {
+      "id": "IMG-A150",
+      "title": "أسطورة المثابرة",
+      "description": "حقق هدف اللعب النشط أو الاستمرارية عبر جلسات موثقة.",
+      "category": "challenge_streak",
+      "rarity": "Legendary",
+      "scope": "cross_game",
+      "condition": {
+        "event": "active_play_minutes",
+        "metric": "sum",
+        "target": 5000
+      },
+      "reward": {
+        "xp": 300,
+        "coins": 700
+      },
+      "status": "requires_authoritative_game_or_feature_integration"
+    }
+  ],
+  "secretAchievement": {
+    "id": "IMG-A151",
+    "title": "إكمال جميع الإنجازات",
+    "description": "أكمل الإنجازات الأساسية الـ150 لفتح الإنجاز السري.",
+    "category": "secret",
+    "rarity": "Secret",
+    "scope": "site",
+    "condition": {
+      "event": "all_base_achievements_completed",
+      "metric": "count",
+      "target": 150
+    },
+    "reward": {
+      "xp": 0,
+      "coins": 5000,
+      "title": "THE LEGEND",
+      "exclusiveFrame": "the_legend_royal_gold",
+      "xpNote": "لا يمنح XP إضافيًا"
+    },
+    "visibility": "hidden_until_150_completed",
+    "specialCelebration": {
+      "trophy": "original_gold_trophy_with_img_logo",
+      "progressBar": "green_completed",
+      "soundControls": true,
+      "effectsControls": true,
+      "music": "original_or_licensed_only"
+    }
+  }
+    }
