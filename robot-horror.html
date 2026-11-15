@@ -1,974 +1,176 @@
 <!DOCTYPE html>
-<html lang="ar" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ROBOT: LAST QUETA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#050816" />
+  <title>ROBOT: LAST QUETA | I.M.G GAMING</title>
   <style>
-    :root {
-      --bg: #050816;
-      --panel: rgba(10, 16, 30, 0.9);
-      --panel-border: #7dd3fc;
-      --accent: #22d3ee;
-      --danger: #f87171;
-      --warning: #fbbf24;
-      --success: #4ade80;
-      --text: #ebf8ff;
-      --muted: #9fb7d0;
-    }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at top, #0f172a, #020617 60%);
-      color: var(--text);
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      overflow: hidden;
-    }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #game-shell {
-      position: relative;
-      width: min(100vw, 1100px);
-      height: min(100vh, 700px);
-      background: #030712;
-      border: 2px solid rgba(125, 211, 252, 0.4);
-      box-shadow: 0 0 30px rgba(34, 211, 238, 0.25);
-      overflow: hidden;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      background: #020617;
-    }
-
-    .screen {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(2, 6, 23, 0.82);
-      backdrop-filter: blur(4px);
-      z-index: 10;
-      padding: 24px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .panel {
-      width: min(92%, 760px);
-      background: rgba(15, 23, 42, 0.92);
-      border: 2px solid rgba(125, 211, 252, 0.7);
-      border-radius: 18px;
-      box-shadow: 0 12px 30px rgba(14, 116, 144, 0.35);
-      padding: 26px 20px 18px;
-      text-align: center;
-    }
-
-    .title {
-      margin: 0 0 12px;
-      font-size: clamp(2rem, 3vw, 4rem);
-      line-height: 1;
-      letter-spacing: 0.08em;
-      font-weight: 900;
-      color: #f8fbff;
-      text-shadow: 0 0 18px rgba(34, 211, 238, 0.6);
-    }
-
-    .subtitle {
-      margin: 0 0 18px;
-      font-size: 1rem;
-      color: var(--muted);
-    }
-
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    button {
-      appearance: none;
-      border: 2px solid #020617;
-      background: linear-gradient(180deg, #0ea5e9, #0369a1);
-      color: white;
-      font-weight: 800;
-      font-size: 1rem;
-      padding: 12px 18px;
-      border-radius: 12px;
-      cursor: pointer;
-      box-shadow: 0 4px 0 #020617;
-      transition: transform 0.08s ease, box-shadow 0.08s ease;
-    }
-
-    button:active {
-      transform: translateY(4px);
-      box-shadow: 0 0 0 #020617;
-    }
-
-    .secondary {
-      background: linear-gradient(180deg, #475569, #334155);
-    }
-
-    .danger {
-      background: linear-gradient(180deg, #ef4444, #b91c1c);
-    }
-
-    .success {
-      background: linear-gradient(180deg, #22c55e, #15803d);
-    }
-
-    .settings-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-      margin-top: 14px;
-      text-align: left;
-    }
-
-    .setting {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      border-radius: 12px;
-      padding: 12px 12px 10px;
-    }
-
-    .setting label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: var(--text);
-      font-weight: 700;
-      margin-bottom: 8px;
-      gap: 10px;
-    }
-
-    .setting output {
-      color: var(--warning);
-      font-size: 0.92rem;
-      min-width: 40px;
-      text-align: right;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-    }
-
-    .multiplayer-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(150px, 1fr));
-      gap: 12px;
-      margin: 18px auto 12px;
-      max-width: 420px;
-    }
-
-    .slot {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      border-radius: 12px;
-      padding: 10px 8px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .slot.ready {
-      border-color: rgba(74, 222, 128, 0.9);
-      color: #b7f7d3;
-      box-shadow: inset 0 0 12px rgba(74, 222, 128, 0.18);
-    }
-
-    #hud {
-      position: absolute;
-      inset: 0 0 auto 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 12px 14px;
-      pointer-events: none;
-      z-index: 6;
-      font-weight: 800;
-      font-size: 0.9rem;
-    }
-
-    .hud-box {
-      background: rgba(2, 6, 23, 0.8);
-      border: 1px solid rgba(125, 211, 252, 0.6);
-      border-radius: 12px;
-      padding: 8px 10px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      color: #e2f5ff;
-    }
-
-    .hud-box .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      background: var(--success);
-      box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
-    }
-
-    .hud-box .danger {
-      background: var(--danger);
-      box-shadow: 0 0 10px rgba(248, 113, 113, 0.7);
-    }
-
-    #message {
-      position: absolute;
-      left: 50%;
-      bottom: 22px;
-      transform: translateX(-50%);
-      background: rgba(2, 6, 23, 0.76);
-      border: 1px solid rgba(250, 204, 21, 0.7);
-      color: #fef3c7;
-      border-radius: 12px;
-      padding: 8px 14px;
-      font-weight: 700;
-      z-index: 6;
-      min-width: min(90%, 420px);
-      text-align: center;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-
-    #message.visible {
-      opacity: 1;
-    }
+    :root{color-scheme:dark;--cyan:#67e8f9;--blue:#0ea5e9;--panel:rgba(5,12,26,.94);--text:#eaf7ff;--muted:#a9bfd2;--gold:#fbbf24;--red:#fb7185}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020617;color:var(--text);font-family:Tahoma,"Segoe UI",sans-serif;touch-action:none}
+    #shell{position:relative;width:min(100vw,1200px);height:min(100vh,760px);margin:auto;overflow:hidden;background:#030712;border:1px solid #164e63;box-shadow:0 0 42px #0891b244}
+    canvas{display:block;width:100%;height:100%}.screen{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(120deg,#020617dd,#0f172acc);backdrop-filter:blur(5px);overflow:auto}.hidden{display:none!important}
+    .panel{width:min(94%,760px);max-height:96%;overflow:auto;text-align:center;padding:24px;border:1px solid #67e8f988;border-radius:20px;background:var(--panel);box-shadow:0 15px 55px #000a,0 0 25px #0891b222}
+    h1,h2{margin:0 0 12px}.logo{font-size:clamp(2rem,6vw,4.2rem);font-weight:1000;letter-spacing:.04em;color:#e0f2fe;text-shadow:0 0 20px #22d3ee88}.logo span{color:var(--cyan)}.subtitle{color:var(--muted);line-height:1.7;margin:8px auto 18px;max-width:620px}
+    .buttons{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:16px}button{border:1px solid #7dd3fc66;border-radius:11px;padding:11px 17px;color:#effaff;background:linear-gradient(#0284c7,#075985);font:700 15px Tahoma,sans-serif;cursor:pointer;box-shadow:0 3px 0 #020617;touch-action:manipulation}button:active{transform:translateY(2px);box-shadow:none}button.secondary{background:linear-gradient(#475569,#1e293b)}button.good{background:linear-gradient(#16a34a,#166534)}button.warn{background:linear-gradient(#d97706,#92400e)}button.red{background:linear-gradient(#e11d48,#9f1239)}
+    .maps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px auto;max-width:680px}.map-card{border:1px solid #64748b;border-radius:14px;padding:14px 9px;background:#0f172acc;cursor:pointer;transition:.15s}.map-card:hover,.map-card.selected{border-color:var(--cyan);box-shadow:inset 0 0 20px #06b6d433,0 0 14px #22d3ee33;transform:translateY(-2px)}.map-card b{display:block;margin:5px 0;color:#e0f2fe}.map-card small{color:var(--muted);line-height:1.5}.map-icon{font-size:30px}
+    .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;text-align:right}.setting{padding:12px;border:1px solid #334155;border-radius:12px;background:#0b1220}.setting label{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px;font-weight:bold}.setting output{color:var(--gold)}input[type=range]{width:100%;accent-color:var(--cyan)}
+    #hud{position:absolute;z-index:5;top:10px;right:10px;left:10px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;pointer-events:none}.hudbox{padding:8px 11px;background:#020617d9;border:1px solid #67e8f977;border-radius:10px;font-weight:bold;font-size:13px;text-shadow:0 1px 3px #000}.health{display:inline-block;width:110px;height:9px;margin-right:6px;border-radius:9px;background:#334155;vertical-align:middle;overflow:hidden}.health i{display:block;width:100%;height:100%;background:#4ade80;transition:width .2s}.hud-actions{pointer-events:auto}.hud-actions button{padding:7px 10px;font-size:13px}
+    #toast{position:absolute;z-index:7;bottom:18px;left:50%;transform:translateX(-50%);padding:9px 16px;max-width:92%;background:#020617e8;border:1px solid #fbbf2488;border-radius:12px;color:#fff7d6;text-align:center;font-weight:bold;opacity:0;transition:opacity .2s;pointer-events:none}#toast.show{opacity:1}
+    #touch-controls{position:absolute;z-index:6;bottom:14px;left:14px;right:14px;display:none;justify-content:space-between;align-items:end;pointer-events:none}.dpad,.actions{display:grid;gap:5px;pointer-events:auto}.dpad{grid-template-columns:repeat(3,48px);grid-template-rows:repeat(2,44px)}.actions{grid-template-columns:repeat(2,58px)}.touch-btn{width:48px;height:44px;padding:4px;background:#0f172dcc;border:1px solid #7dd3fc88;box-shadow:none}.actions .touch-btn{width:58px;height:54px;font-size:12px}
+    #hint{position:absolute;z-index:4;bottom:12px;right:50%;transform:translateX(50%);padding:6px 10px;border-radius:8px;background:#02061799;color:#dbeafe;font-size:12px;white-space:nowrap;pointer-events:none}
+    .slots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:440px;margin:16px auto}.slot{padding:12px;background:#0f172a;border:1px solid #475569;border-radius:10px}.slot.ready{border-color:#4ade80;color:#bbf7d0}.note{font-size:12px;color:#94a3b8;line-height:1.6}
+    @media(max-width:650px){#shell{width:100vw;height:100dvh;border:0}.panel{padding:18px 13px}.maps{grid-template-columns:1fr;gap:7px}.map-card{padding:9px;display:flex;align-items:center;gap:12px;text-align:right}.map-icon{min-width:42px}.hudbox{font-size:11px;padding:7px}.health{width:65px}#touch-controls{display:flex}#hint{display:none}}
   </style>
 </head>
 <body>
-  <div id="game-shell">
-    <canvas id="gameCanvas" width="1100" height="700"></canvas>
-
-    <div id="hud" class="hidden">
-      <div class="hud-box">Robot <span class="dot"></span> HP <span id="hpValue">100</span>%</div>
-      <div class="hud-box">Cores <span id="coreValue">0 / 3</span></div>
-      <div class="hud-box">Objective <span id="objectiveValue">Collect cores</span></div>
-    </div>
-
-    <div id="message">MISSION START</div>
-
-    <div id="menu-screen" class="screen">
-      <div class="panel">
-        <h1 class="title">ROBOT: LAST QUETA</h1>
-        <p class="subtitle">A horror robot quest where you must survive the dark and reach the Queta gate.</p>
-
-        <div class="button-row">
-          <button id="singleBtn" class="success">Single Player</button>
-          <button id="multiBtn">Multiplayer</button>
-          <button id="settingsBtn" class="secondary">Settings</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="settings-screen" class="screen hidden">
-      <div class="panel">
-        <h2 class="title" style="font-size: clamp(1.8rem, 2vw, 2.7rem);">Settings</h2>
-
-        <div class="settings-grid">
-          <div class="setting">
-            <label for="masterVolume">Master Volume <output id="masterVolumeOut">70%</output></label>
-            <input id="masterVolume" type="range" min="0" max="100" value="70" />
-          </div>
-
-          <div class="setting">
-            <label for="musicVolume">Music Volume <output id="musicVolumeOut">50%</output></label>
-            <input id="musicVolume" type="range" min="0" max="100" value="50" />
-          </div>
-
-          <div class="setting">
-            <label for="sfxVolume">SFX Volume <output id="sfxVolumeOut">90%</output></label>
-            <input id="sfxVolume" type="range" min="0" max="100" value="90" />
-          </div>
-
-          <div class="setting">
-            <label for="friendVolume">Friends Volume <output id="friendVolumeOut">60%</output></label>
-            <input id="friendVolume" type="range" min="0" max="100" value="60" />
-          </div>
-
-          <div class="setting">
-            <label for="sensitivity">Sensitivity <output id="sensitivityOut">80%</output></label>
-            <input id="sensitivity" type="range" min="20" max="140" value="80" />
-          </div>
-        </div>
-
-        <div class="button-row" style="margin-top: 22px;">
-          <button id="saveSettingsBtn">Save</button>
-          <button id="backFromSettingsBtn" class="secondary">Back</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="multiplayer-screen" class="screen hidden">
-      <div class="panel">
-        <h2 class="title" style="font-size: clamp(1.8rem, 2vw, 2.7rem);">Multiplayer Lobby</h2>
-        <p class="subtitle">Enter the dark tunnel with your squad.</p>
-
-        <div class="multiplayer-grid" id="lobbySlots"></div>
-
-        <div class="button-row">
-          <button id="startMultiBtn" class="success">Start Match</button>
-          <button id="backFromMultiBtn" class="secondary">Back</button>
-        </div>
-      </div>
-    </div>
+<div id="shell">
+  <canvas id="gameCanvas" aria-label="لعبة روبوت: آخر قوتا"></canvas>
+  <div id="hud" class="hidden">
+    <div class="hudbox">🤖 الروبوت <span class="health"><i id="healthFill"></i></span><span id="healthText">100</span></div>
+    <div class="hudbox">🔮 قوتا: <span id="coreText">0/3</span></div>
+    <div class="hudbox">📍 <span id="objective">اجمع نوى قوتا</span></div>
+    <div class="hud-actions"><button id="pauseBtn" class="secondary">⏸ إيقاف</button></div>
+  </div>
+  <div id="toast"></div>
+  <div id="hint" class="hidden">WASD / الأسهم للحركة · Space نبضة الطاقة · Shift ركض</div>
+  <div id="touch-controls" class="hidden">
+    <div class="dpad"><span></span><button class="touch-btn" data-key="w">▲</button><span></span><button class="touch-btn" data-key="a">◀</button><button class="touch-btn" data-key="s">▼</button><button class="touch-btn" data-key="d">▶</button></div>
+    <div class="actions"><button class="touch-btn" id="touchPulse">⚡ نبضة</button><button class="touch-btn" data-key="shift">🏃 ركض</button></div>
   </div>
 
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const messageBox = document.getElementById('message');
-    const ui = {
-      hp: document.getElementById('hpValue'),
-      cores: document.getElementById('coreValue'),
-      objective: document.getElementById('objectiveValue'),
-      hud: document.getElementById('hud'),
-      menu: document.getElementById('menu-screen'),
-      settings: document.getElementById('settings-screen'),
-      multi: document.getElementById('multiplayer-screen'),
-      lobby: document.getElementById('lobbySlots')
-    };
-
-    const settingsDefault = {
-      master: 70,
-      music: 50,
-      sfx: 90,
-      friend: 60,
-      sensitivity: 80
-    };
-
-    let settings = loadSettings();
-    let audioCtx = null;
-    let masterGain = null;
-    let musicGain = null;
-    let sfxGain = null;
-    let musicOsc = null;
-    let audioStarted = false;
-
-    const WORLD = {
-      width: 1400,
-      height: 900,
-      tile: 60,
-      obstacles: [
-        { x: 200, y: 140, w: 220, h: 60 },
-        { x: 520, y: 120, w: 80, h: 260 },
-        { x: 800, y: 90, w: 120, h: 150 },
-        { x: 660, y: 420, w: 220, h: 70 },
-        { x: 220, y: 500, w: 180, h: 110 },
-        { x: 980, y: 300, w: 180, h: 120 },
-        { x: 310, y: 300, w: 140, h: 90 },
-        { x: 1090, y: 540, w: 120, h: 120 }
-      ]
-    };
-
-    const player = {
-      x: 120,
-      y: 170,
-      radius: 18,
-      speed: 220,
-      hp: 100,
-      maxHp: 100,
-      angle: 0,
-      cores: 0,
-      weaponCooldown: 0,
-      immune: 0,
-      alive: true,
-      mode: 'single'
-    };
-
-    let keys = {};
-    let pointer = { x: canvas.width / 2, y: canvas.height / 2 };
-    let camera = { x: 0, y: 0 };
-    let running = false;
-    let mode = 'single';
-    let allCores = [];
-    let monsters = [];
-    let friendBots = [];
-    let portal = { x: 1240, y: 760, r: 28 };
-    let flashAlpha = 0;
-    let levelTimer = 0;
-    let missionText = 'Collect 3 cores';
-
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value));
-    }
-
-    function loadSettings() {
-      try {
-        const saved = JSON.parse(localStorage.getItem('robot_horror_settings'));
-        return { ...settingsDefault, ...saved };
-      } catch {
-        return { ...settingsDefault };
-      }
-    }
-
-    function saveSettings() {
-      localStorage.setItem('robot_horror_settings', JSON.stringify(settings));
-    }
-
-    function updateSettingLabels() {
-      document.getElementById('masterVolumeOut').textContent = `${settings.master}%`;
-      document.getElementById('musicVolumeOut').textContent = `${settings.music}%`;
-      document.getElementById('sfxVolumeOut').textContent = `${settings.sfx}%`;
-      document.getElementById('friendVolumeOut').textContent = `${settings.friend}%`;
-      document.getElementById('sensitivityOut').textContent = `${settings.sensitivity}%`;
-    }
-
-    function bindSettingInputs() {
-      const ids = ['masterVolume', 'musicVolume', 'sfxVolume', 'friendVolume', 'sensitivity'];
-      ids.forEach((id) => {
-        const el = document.getElementById(id);
-        const key = id.replace('Volume', '').replace('sensitivity', 'sensitivity');
-        let settingKey = 'master';
-        if (id === 'musicVolume') settingKey = 'music';
-        if (id === 'sfxVolume') settingKey = 'sfx';
-        if (id === 'friendVolume') settingKey = 'friend';
-        if (id === 'sensitivity') settingKey = 'sensitivity';
-
-        el.value = settings[settingKey];
-        el.addEventListener('input', () => {
-          settings[settingKey] = Number(el.value);
-          updateSettingLabels();
-        });
-      });
-      updateSettingLabels();
-    }
-
-    function ensureAudio() {
-      if (audioStarted) return;
-      audioStarted = true;
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      masterGain = audioCtx.createGain();
-      musicGain = audioCtx.createGain();
-      sfxGain = audioCtx.createGain();
-
-      masterGain.gain.value = settings.master / 100;
-      musicGain.gain.value = settings.music / 100;
-      sfxGain.gain.value = settings.sfx / 100;
-
-      masterGain.connect(audioCtx.destination);
-      musicGain.connect(masterGain);
-      sfxGain.connect(masterGain);
-
-      startMusicLoop();
-    }
-
-    function startMusicLoop() {
-      if (!audioCtx || musicOsc) return;
-      musicOsc = audioCtx.createOscillator();
-      const musicGainNode = audioCtx.createGain();
-      musicOsc.type = 'sawtooth';
-      musicOsc.frequency.value = 62;
-      musicGainNode.gain.value = 0.015;
-      musicOsc.connect(musicGainNode);
-      musicGainNode.connect(musicGain);
-      musicOsc.start();
-    }
-
-    function updateAudioMix() {
-      if (!masterGain || !musicGain || !sfxGain) return;
-      masterGain.gain.value = settings.master / 100;
-      musicGain.gain.value = settings.music / 100;
-      sfxGain.gain.value = settings.sfx / 100;
-    }
-
-    function playTone(freq, duration = 0.12, type = 'sine', gain = 0.04) {
-      if (!audioCtx || !sfxGain) return;
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      g.gain.value = gain;
-      osc.connect(g);
-      g.connect(sfxGain);
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
-    }
-
-    function showMessage(text, time = 1700) {
-      messageBox.textContent = text;
-      messageBox.classList.add('visible');
-      clearTimeout(showMessage.timeoutId);
-      showMessage.timeoutId = setTimeout(() => messageBox.classList.remove('visible'), time);
-    }
-
-    function createCore(x, y) {
-      return { x, y, r: 12, collected: false };
-    }
-
-    function createMonster(x, y, hue = 0) {
-      return {
-        x, y,
-        r: 16,
-        speed: 80 + Math.random() * 30,
-        phase: Math.random() * Math.PI * 2,
-        hue,
-        attackCooldown: 0,
-        patrol: { x, y }
-      };
-    }
-
-    function resetGameState() {
-      player.x = 120;
-      player.y = 170;
-      player.hp = 100;
-      player.cores = 0;
-      player.alive = true;
-      player.weaponCooldown = 0;
-      player.immune = 0;
-      portal.x = 1240;
-      portal.y = 760;
-      flashAlpha = 0;
-      levelTimer = 0;
-      allCores = [
-        createCore(260, 700),
-        createCore(880, 180),
-        createCore(1180, 480)
-      ];
-
-      monsters = [
-        createMonster(560, 250, 8),
-        createMonster(760, 620, 20),
-        createMonster(1030, 260, 10),
-        createMonster(420, 760, 18)
-      ];
-
-      friendBots = mode === 'multi' ? [
-        { name: 'Mate A', x: 180, y: 240, color: '#60a5fa', active: true },
-        { name: 'Mate B', x: 260, y: 330, color: '#4ade80', active: true },
-        { name: 'Mate C', x: 210, y: 430, color: '#fbbf24', active: true }
-      ] : [];
-
-      missionText = 'Collect the 3 soul cores';
-      ui.objective.textContent = missionText;
-      updateHud();
-    }
-
-    function updateHud() {
-      ui.hp.textContent = Math.max(0, Math.round(player.hp));
-      ui.cores.textContent = `${player.cores} / 3`;
-      ui.objective.textContent = missionText;
-    }
-
-    function showScreen(name) {
-      const screens = ['menu-screen', 'settings-screen', 'multiplayer-screen'];
-      screens.forEach((id) => {
-        const el = document.getElementById(id);
-        el.classList.toggle('hidden', id !== name && id !== 'menu-screen' ? true : false);
-      });
-
-      if (name === 'menu-screen') {
-        document.getElementById('menu-screen').classList.remove('hidden');
-        document.getElementById('settings-screen').classList.add('hidden');
-        document.getElementById('multiplayer-screen').classList.add('hidden');
-      }
-      if (name === 'settings-screen') {
-        document.getElementById('settings-screen').classList.remove('hidden');
-        document.getElementById('menu-screen').classList.add('hidden');
-        document.getElementById('multiplayer-screen').classList.add('hidden');
-      }
-      if (name === 'multiplayer-screen') {
-        document.getElementById('multiplayer-screen').classList.remove('hidden');
-        document.getElementById('menu-screen').classList.add('hidden');
-        document.getElementById('settings-screen').classList.add('hidden');
-      }
-    }
-
-    function showLobbySlots() {
-      ui.lobby.innerHTML = '';
-      const slots = ['YOU', 'Mate A', 'Mate B', 'Mate C'];
-      slots.forEach((slotName) => {
-        const div = document.createElement('div');
-        div.className = 'slot ready';
-        div.textContent = slotName;
-        ui.lobby.appendChild(div);
-      });
-    }
-
-    function startSingleGame() {
-      ensureAudio();
-      updateAudioMix();
-      mode = 'single';
-      running = true;
-      document.getElementById('menu-screen').classList.add('hidden');
-      ui.hud.classList.remove('hidden');
-      resetGameState();
-      showMessage('Mission: Find the lost cores and reach the Queta gate', 2200);
-      playTone(140, 0.16, 'triangle', 0.05);
-      setObjective('Collect the 3 soul cores');
-    }
-
-    function startMultiGame() {
-      ensureAudio();
-      updateAudioMix();
-      mode = 'multi';
-      running = true;
-      document.getElementById('multiplayer-screen').classList.add('hidden');
-      ui.hud.classList.remove('hidden');
-      resetGameState();
-      showMessage('Squad mode online. Protect the robot and reach the gate.', 2400);
-      playTone(220, 0.18, 'triangle', 0.05);
-      setObjective('Collect the 3 soul cores with the squad');
-    }
-
-    function setObjective(text) {
-      missionText = text;
-      ui.objective.textContent = missionText;
-    }
-
-    function updateGame(dt) {
-      if (!running) return;
-      levelTimer += dt;
-      const moveX = (keys['d'] || keys['arrowright'] ? 1 : 0) - (keys['a'] || keys['arrowleft'] ? 1 : 0);
-      const moveY = (keys['s'] || keys['arrowdown'] ? 1 : 0) - (keys['w'] || keys['arrowup'] ? 1 : 0);
-      let dx = moveX;
-      let dy = moveY;
-      const dist = Math.hypot(dx, dy) || 1;
-      dx /= dist;
-      dy /= dist;
-
-      const sens = settings.sensitivity / 100;
-      player.angle = Math.atan2(pointer.y - canvas.height / 2, pointer.x - canvas.width / 2) + Math.PI / 2;
-      player.angle += (Math.random() - 0.5) * 0.004 * sens;
-
-      const nextX = player.x + dx * player.speed * dt * (0.9 + sens * 0.2);
-      const nextY = player.y + dy * player.speed * dt * (0.9 + sens * 0.2);
-
-      if (!isColliding(nextX, player.y, player.radius)) player.x = nextX;
-      if (!isColliding(player.x, nextY, player.radius)) player.y = nextY;
-
-      player.x = clamp(player.x, player.radius + 10, WORLD.width - player.radius - 10);
-      player.y = clamp(player.y, player.radius + 10, WORLD.height - player.radius - 10);
-
-      if (player.weaponCooldown > 0) player.weaponCooldown -= dt;
-      if (player.immune > 0) player.immune -= dt;
-
-      // Collect cores
-      allCores.forEach((core) => {
-        if (!core.collected && Math.hypot(player.x - core.x, player.y - core.y) < 28) {
-          core.collected = true;
-          player.cores += 1;
-          playTone(380, 0.16, 'square', 0.06);
-          showMessage('Core recovered', 900);
-          updateHud();
-        }
-      });
-
-      if (player.cores >= 3) {
-        const distPortal = Math.hypot(player.x - portal.x, player.y - portal.y);
-        if (distPortal < 40) {
-          running = false;
-          ui.hud.classList.add('hidden');
-          showMessage('The Queta is yours. You survived.', 3000);
-          setTimeout(() => {
-            document.getElementById('menu-screen').classList.remove('hidden');
-          }, 1500);
-          return;
-        }
-        setObjective('Reach the Queta gate');
-      } else {
-        setObjective('Collect the 3 soul cores');
-      }
-
-      monsters.forEach((monster) => {
-        const mdx = player.x - monster.x;
-        const mdy = player.y - monster.y;
-        const dist = Math.hypot(mdx, mdy) || 1;
-
-        if (dist < 180) {
-          monster.x += (mdx / dist) * monster.speed * dt;
-          monster.y += (mdy / dist) * monster.speed * dt;
-          monster.x = clamp(monster.x, 18, WORLD.width - 18);
-          monster.y = clamp(monster.y, 18, WORLD.height - 18);
-        } else {
-          monster.x += Math.sin(levelTimer * 0.8 + monster.phase) * 0.6;
-          monster.y += Math.cos(levelTimer * 0.9 + monster.phase) * 0.6;
-        }
-
-        monster.attackCooldown -= dt;
-        if (dist < 26 && monster.attackCooldown <= 0) {
-          monster.attackCooldown = 0.9;
-          if (player.immune <= 0) {
-            player.hp -= 12;
-            player.immune = 0.7;
-            flashAlpha = 1;
-            playTone(90, 0.12, 'sawtooth', 0.08);
-            if (player.hp <= 0) {
-              player.hp = 0;
-              running = false;
-              ui.hud.classList.add('hidden');
-              showMessage('The robot collapsed. Restarting the mission...', 2200);
-              setTimeout(() => {
-                document.getElementById('menu-screen').classList.remove('hidden');
-              }, 1600);
-              return;
-            }
-          }
-        }
-      });
-
-      if (player.immune > 0) {
-        flashAlpha = Math.max(0, flashAlpha - dt * 2.5);
-      }
-
-      if (mode === 'multi' && friendBots.length) {
-        friendBots.forEach((bot) => {
-          const dx = player.x - bot.x;
-          const dy = player.y - bot.y;
-          const distB = Math.hypot(dx, dy) || 1;
-          if (distB > 120) {
-            bot.x += (dx / distB) * 55 * dt;
-            bot.y += (dy / distB) * 55 * dt;
-          }
-        });
-      }
-
-      if (player.hp < 25) {
-        showMessage('Critical system failure! Move away from the shadows!', 1000);
-      }
-
-      updateHud();
-    }
-
-    function isInsideRect(x, y, rx, ry, rw, rh) {
-      return x > rx && x < rx + rw && y > ry && y < ry + rh;
-    }
-
-    function isColliding(x, y, r) {
-      const corners = [
-        [x - r, y - r],
-        [x + r, y - r],
-        [x - r, y + r],
-        [x + r, y + r]
-      ];
-      return corners.some(([px, py]) => {
-        if (px < 0 || py < 0 || px > WORLD.width || py > WORLD.height) return true;
-        return WORLD.obstacles.some((obs) => isInsideRect(px, py, obs.x, obs.y, obs.w, obs.h)) ||
-          WORLD.obstacles.some((obs) => isInsideRect(px, py, obs.x, obs.y, obs.w, obs.h));
-      });
-    }
-
-    function drawBackground() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#020617');
-      gradient.addColorStop(1, '#101828');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Fog
-      for (let i = 0; i < 20; i++) {
-        const x = ((i * 173 + levelTimer * 7) % (canvas.width + 150)) - 80;
-        const y = ((i * 113 + levelTimer * 11) % (canvas.height + 150)) - 80;
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.06)';
-        ctx.fillRect(x, y, 180, 120);
-      }
-    }
-
-    function worldToScreen(x, y) {
-      const offsetX = canvas.width / 2 - player.x;
-      const offsetY = canvas.height / 2 - player.y;
-      return { x: x + offsetX, y: y + offsetY };
-    }
-
-    function drawMap() {
-      const offsetX = canvas.width / 2 - player.x;
-      const offsetY = canvas.height / 2 - player.y;
-
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
-      ctx.lineWidth = 1;
-      for (let x = 0; x < WORLD.width; x += WORLD.tile) {
-        for (let y = 0; y < WORLD.height; y += WORLD.tile) {
-          ctx.strokeRect(x + offsetX, y + offsetY, WORLD.tile, WORLD.tile);
-        }
-      }
-
-      WORLD.obstacles.forEach((obs) => {
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(obs.x + offsetX, obs.y + offsetY, obs.w, obs.h);
-        ctx.strokeStyle = '#475569';
-        ctx.strokeRect(obs.x + offsetX, obs.y + offsetY, obs.w, obs.h);
-      });
-
-      allCores.forEach((core) => {
-        if (core.collected) return;
-        const p = worldToScreen(core.x, core.y);
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(levelTimer * 2.8);
-        ctx.fillStyle = '#a78bfa';
-        ctx.fillRect(-8, -8, 16, 16);
-        ctx.fillStyle = '#fef3c7';
-        ctx.fillRect(-3, -3, 6, 6);
-        ctx.restore();
-      });
-
-      const gate = worldToScreen(portal.x, portal.y);
-      ctx.beginPath();
-      ctx.fillStyle = player.cores >= 3 ? '#34d399' : '#475569';
-      ctx.arc(gate.x, gate.y, 24, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-      ctx.lineWidth = 3;
-      ctx.arc(gate.x, gate.y, 32, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    function drawRobot(px, py, color, size = 18) {
-      const p = worldToScreen(px, py);
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(player.angle);
-      ctx.fillStyle = color;
-      ctx.fillRect(-size, -size, size * 2, size * 2);
-      ctx.fillStyle = '#dbeafe';
-      ctx.fillRect(-size * 0.5, -size * 0.4, size * 0.3, size * 0.3);
-      ctx.fillRect(size * 0.2, -size * 0.4, size * 0.3, size * 0.3);
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(-size * 0.7, size * 0.5, size * 1.4, 4);
-      ctx.restore();
-    }
-
-    function drawMonster(monster) {
-      const p = worldToScreen(monster.x, monster.y);
-      const glow = 18 + Math.sin(levelTimer * 8 + monster.phase) * 6;
-      ctx.beginPath();
-      ctx.fillStyle = `hsla(${monster.hue}, 90%, 55%, 0.8)`;
-      ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-      ctx.arc(p.x, p.y, glow, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#111827';
-      ctx.fillRect(p.x - 8, p.y - 8, 16, 16);
-    }
-
-    function drawFriends() {
-      friendBots.forEach((bot) => {
-        const p = worldToScreen(bot.x, bot.y);
-        ctx.fillStyle = bot.color;
-        ctx.fillRect(p.x - 12, p.y - 12, 24, 24);
-        ctx.fillStyle = '#e2f5ff';
-        ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
-      });
-    }
-
-    function drawStatusEffects() {
-      if (flashAlpha > 0) {
-        ctx.fillStyle = `rgba(248, 113, 113, ${flashAlpha * 0.6})`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-    }
-
-    function render() {
-      drawBackground();
-      drawMap();
-      drawFriends();
-      monsters.forEach(drawMonster);
-      drawRobot(player.x, player.y, '#7dd3fc', 18);
-      drawStatusEffects();
-
-      const gateText = player.cores >= 3 ? 'QUETA GATE OPEN' : 'QUETA GATE LOCKED';
-      drawScreenText(gateText, portal.x, portal.y - 40);
-    }
-
-    function drawScreenText(text, worldX, worldY) {
-      const p = worldToScreen(worldX, worldY);
-      ctx.fillStyle = '#e0f2fe';
-      ctx.font = 'bold 14px Segoe UI';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, p.x, p.y);
-    }
-
-    function handlePointer(event) {
-      const rect = canvas.getBoundingClientRect();
-      pointer.x = (event.clientX - rect.left) / rect.width * canvas.width;
-      pointer.y = (event.clientY - rect.top) / rect.height * canvas.height;
-    }
-
-    function handleKeyState(event, isDown) {
-      const key = event.key.toLowerCase();
-      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key) || key === 'arrowleft' || key === 'arrowright') {
-        keys[key] = isDown;
-      }
-      if (event.key === 'e') {
-        if (isDown) {
-          if (player.cores >= 3 && Math.hypot(player.x - portal.x, player.y - portal.y) < 55) {
-            running = false;
-            showMessage('Queta reached. Mission completed.', 2600);
-            setTimeout(() => {
-              document.getElementById('menu-screen').classList.remove('hidden');
-            }, 1500);
-          }
-        }
-      }
-    }
-
-    document.getElementById('singleBtn').addEventListener('click', startSingleGame);
-    document.getElementById('multiBtn').addEventListener('click', () => {
-      showLobbySlots();
-      showScreen('multiplayer-screen');
-    });
-    document.getElementById('settingsBtn').addEventListener('click', () => showScreen('settings-screen'));
-    document.getElementById('backFromSettingsBtn').addEventListener('click', () => showScreen('menu-screen'));
-    document.getElementById('backFromMultiBtn').addEventListener('click', () => showScreen('menu-screen'));
-    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-      saveSettings();
-      updateAudioMix();
-      showScreen('menu-screen');
-      showMessage('Settings saved', 1200);
-    });
-    document.getElementById('startMultiBtn').addEventListener('click', startMultiGame);
-
-    document.addEventListener('keydown', (event) => handleKeyState(event, true));
-    document.addEventListener('keyup', (event) => handleKeyState(event, false));
-    canvas.addEventListener('mousemove', handlePointer);
-    canvas.addEventListener('click', () => ensureAudio());
-    window.addEventListener('resize', () => {
-      canvas.width = canvas.clientWidth * window.devicePixelRatio;
-      canvas.height = canvas.clientHeight * window.devicePixelRatio;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-    });
-
-    bindSettingInputs();
-    showScreen('menu-screen');
-    showLobbySlots();
-    resetGameState();
-    updateHud();
-
-    let last = 0;
-    function loop(timestamp) {
-      const dt = Math.min(0.033, (timestamp - last) / 1000 || 0.016);
-      last = timestamp;
-
-      if (running) {
-        updateGame(dt);
-      }
-      render();
-      requestAnimationFrame(loop);
-    }
-
-    requestAnimationFrame(loop);
-  </script>
+  <section id="menu-screen" class="screen"><div class="panel">
+    <h1 class="logo">ROBOT: <span>LAST QUETA</span></h1>
+    <p class="subtitle">مغامرة رعب وبقاء: العب بروبوتك، واجمع نوى قوتا من مواقع مهجورة، واهرب قبل أن تحاصرك الوحوش.</p>
+    <h3>اختر خريطة المهمة</h3>
+    <div class="maps">
+      <div class="map-card selected" data-map="lab"><div class="map-icon">🧪</div><div><b>مختبر أوميغا</b><small>ممرات ضيقة ووحش الصيّاد</small></div></div>
+      <div class="map-card" data-map="forest"><div class="map-icon">🌲</div><div><b>الغابة الميتة</b><small>ضباب كثيف ومفترسات متخفية</small></div></div>
+      <div class="map-card" data-map="station"><div class="map-icon">🚇</div><div><b>محطة القطار</b><small>أنفاق طويلة وقاذفات حمضية</small></div></div>
+    </div>
+    <div class="buttons"><button id="singleBtn" class="good">▶ لاعب واحد</button><button id="multiBtn">👥 فريق تعاوني</button><button id="settingsBtn" class="secondary">⚙ الإعدادات</button></div>
+    <p class="note">الفريق التعاوني في هذه النسخة نموذج محلي برفاق آليين، وليس اتصالًا مباشرًا بالإنترنت.</p>
+  </div></section>
+
+  <section id="settings-screen" class="screen hidden"><div class="panel">
+    <h2>⚙ إعدادات اللعبة</h2><p class="subtitle">تُحفظ الإعدادات على هذا الجهاز.</p>
+    <div class="settings-grid">
+      <div class="setting"><label for="master">الصوت العام <output id="masterOut"></output></label><input id="master" type="range" min="0" max="100"></div>
+      <div class="setting"><label for="music">الموسيقى <output id="musicOut"></output></label><input id="music" type="range" min="0" max="100"></div>
+      <div class="setting"><label for="sfx">المؤثرات <output id="sfxOut"></output></label><input id="sfx" type="range" min="0" max="100"></div>
+      <div class="setting"><label for="friends">صوت الرفاق <output id="friendsOut"></output></label><input id="friends" type="range" min="0" max="100"><small class="note">لأصوات الرفاق/الدردشة عند دعمها؛ لا توجد دردشة صوتية في النموذج الحالي.</small></div>
+      <div class="setting"><label for="sensitivity">سرعة الحركة <output id="sensitivityOut"></output></label><input id="sensitivity" type="range" min="60" max="150"></div>
+    </div>
+    <div class="buttons"><button id="saveSettings" class="good">حفظ</button><button class="secondary backMenu">رجوع</button></div>
+  </div></section>
+
+  <section id="lobby-screen" class="screen hidden"><div class="panel">
+    <h2>👥 فريق الاستكشاف</h2><p class="subtitle">كوّن فريقًا من روبوتك وثلاثة رفاق آليين، ثم اجمعوا النوى واصلوا إلى بوابة قوتا.</p>
+    <div class="slots"><div class="slot ready">🤖 أنت — قائد الفريق</div><div class="slot ready">🔵 رفيق الحراسة</div><div class="slot ready">🟢 رفيق الكشاف</div><div class="slot ready">🟡 رفيق الدعم</div></div>
+    <p class="note">هذا وضع تعاوني تجريبي دون لاعبين حقيقيين عبر الشبكة.</p>
+    <div class="buttons"><button id="startSquad" class="good">ابدأ المهمة</button><button class="secondary backMenu">رجوع</button></div>
+  </div></section>
+
+  <section id="pause-screen" class="screen hidden"><div class="panel"><h2>⏸ إيقاف مؤقت</h2><p class="subtitle">الوحوش تنتظر عودتك...</p><div class="buttons"><button id="resumeBtn" class="good">استئناف</button><button id="pauseSettings" class="secondary">الإعدادات</button><button id="quitBtn" class="red">إنهاء المهمة</button></div></div></section>
+  <section id="result-screen" class="screen hidden"><div class="panel"><h2 id="resultTitle">انتهت المهمة</h2><p id="resultText" class="subtitle"></p><div class="buttons"><button id="againBtn" class="good">العب مجددًا</button><button id="resultMenu" class="secondary">القائمة الرئيسية</button></div></div></section>
+</div>
+<script>
+(() => {
+  'use strict';
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const shell = document.getElementById('shell');
+  const $ = (id) => document.getElementById(id);
+  const ui = { menu:$('menu-screen'), settings:$('settings-screen'), lobby:$('lobby-screen'), pause:$('pause-screen'), result:$('result-screen'), hud:$('hud'), hint:$('hint'), touch:$('touch-controls') };
+  const DEFAULTS = {master:70,music:36,sfx:80,friends:60,sensitivity:100};
+  let settings = readSettings();
+  let selectedMap = 'lab';
+  let mode = 'single';
+  let running = false, paused = false, gameOver = false;
+  let lastTime = 0, elapsed = 0, toastTimer = 0, audio = null;
+  let viewW = 1100, viewH = 700, dpr = 1;
+  const world = {w:1500,h:1000, walls:[], cores:[], monsters:[], shots:[], particles:[], exit:{x:1370,y:900,r:30}, tint:'#07111d', floor:'#101b25', grid:'#7dd3fc12'};
+  const player = {x:100,y:100,r:16,hp:100,cores:0,dir:0,cooldown:0,invuln:0,energy:100};
+  const keys = Object.create(null);
+  let squad = [];
+  const maps = {
+    lab:{name:'مختبر أوميغا',tint:'#091321',floor:'#101c29',grid:'#67e8f91a', walls:[[190,120,260,55],[530,90,70,280],[760,180,270,55],[1080,110,65,260],[240,370,75,280],[410,540,260,60],[760,430,70,300],[970,610,290,60],[1210,350,70,190]], cores:[[340,820],[860,330],[1260,740]], monsters:[['hunter',620,300],['spitter',1090,440],['lurker',390,770],['hunter',1260,220]]},
+    forest:{name:'الغابة الميتة',tint:'#06120e',floor:'#10221a',grid:'#4ade8015',walls:[[210,160,100,170],[430,100,170,70],[720,190,90,230],[1030,100,180,75],[280,500,200,75],[540,680,90,190],[900,510,190,80],[1190,650,80,170],[80,760,190,70]],cores:[[390,330],[840,820],[1270,400]],monsters:[['lurker',570,370],['hunter',950,310],['spitter',350,670],['lurker',1230,790]]},
+    station:{name:'محطة القطار',tint:'#111018',floor:'#201d2b',grid:'#c4b5fd18',walls:[[150,170,440,48],[700,170,620,48],[150,440,250,58],[510,440,480,58],[1090,440,250,58],[150,720,620,48],[870,720,470,48],[350,260,55,120],[1000,540,55,150]],cores:[[300,350],[760,850],[1200,330]],monsters:[['spitter',680,360],['hunter',1150,600],['lurker',450,840],['spitter',1300,260]]}
+  };
+  const TYPES = {
+    hunter:{name:'الصيّاد',color:'#f87171',r:18,speed:82,hp:48,glow:'#fb7185',description:'يطارد الروبوت مباشرة'},
+    spitter:{name:'قاذف الحمض',color:'#c084fc',r:20,speed:48,hp:58,glow:'#d8b4fe',description:'يطلق مقذوفات من مسافة'},
+    lurker:{name:'المتخفّي',color:'#fbbf24',r:17,speed:65,hp:42,glow:'#fde68a',description:'يختفي ويظهر قربك'}
+  };
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function readSettings(){try{return {...DEFAULTS,...JSON.parse(localStorage.getItem('last_queta_settings')||'{}')}}catch{return {...DEFAULTS}}}
+  function saveSettings(){try{localStorage.setItem('last_queta_settings',JSON.stringify(settings))}catch{}}
+  function settingUI(){for(const k of Object.keys(DEFAULTS)){const input=$(k),out=$(k+'Out');input.value=settings[k];out.value=settings[k]+'%';out.textContent=settings[k]+'%';input.addEventListener('input',()=>{settings[k]=Number(input.value);out.value=settings[k]+'%';out.textContent=settings[k]+'%';applyAudio()})}}
+  function showOnly(name){Object.values(ui).forEach(el=>{if(el&&el.classList)el.classList.add('hidden')});if(name)ui[name].classList.remove('hidden')}
+  function toast(text,ms=1900){const t=$('toast');t.textContent=text;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),ms)}
+  function resize(){const rect=shell.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);viewW=Math.max(320,rect.width);viewH=Math.max(300,rect.height);canvas.width=Math.floor(viewW*dpr);canvas.height=Math.floor(viewH*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
+  function setupAudio(){if(audio)return;try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ac=new AC(),master=ac.createGain(),music=ac.createGain(),sfx=ac.createGain();music.connect(master);sfx.connect(master);master.connect(ac.destination);audio={ac,master,music,sfx};const osc=ac.createOscillator(),gain=ac.createGain();osc.type='triangle';osc.frequency.value=47;gain.gain.value=.025;osc.connect(gain);gain.connect(music);osc.start();audio.osc=osc;audio.musicGain=gain;applyAudio()}catch{}}
+  function applyAudio(){if(!audio)return;audio.master.gain.setTargetAtTime(settings.master/100,audio.ac.currentTime,.04);audio.music.gain.setTargetAtTime(settings.music/100,audio.ac.currentTime,.04);audio.sfx.gain.setTargetAtTime(settings.sfx/100,audio.ac.currentTime,.04)}
+  function tone(freq=180,duration=.12,wave='sine',volume=.06){if(!audio)return;const o=audio.ac.createOscillator(),g=audio.ac.createGain();o.type=wave;o.frequency.setValueAtTime(freq,audio.ac.currentTime);g.gain.setValueAtTime(volume,audio.ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.ac.currentTime+duration);o.connect(g);g.connect(audio.sfx);o.start();o.stop(audio.ac.currentTime+duration)}
+  function newMonster(type,x,y){const data=TYPES[type];return {type,x,y,r:data.r,hp:data.hp,maxHp:data.hp,speed:data.speed,attack:Math.random()*.7,stun:0,hidden:0,shot:1+Math.random()*1.5,phase:Math.random()*6,flash:0}}
+  function startGame(nextMode=mode){setupAudio();if(audio&&audio.ac.state==='suspended')audio.ac.resume();mode=nextMode;paused=false;running=true;gameOver=false;elapsed=0;player.x=100;player.y=100;player.hp=100;player.cores=0;player.energy=100;player.cooldown=0;player.invuln=0;player.dir=0;
+    const map=maps[selectedMap];world.w=1500;world.h=1000;world.walls=map.walls.map(a=>({x:a[0],y:a[1],w:a[2],h:a[3]}));world.cores=map.cores.map(([x,y])=>({x,y,r:13,taken:false,pulse:Math.random()*6}));world.monsters=map.monsters.map(([t,x,y])=>newMonster(t,x,y));world.shots=[];world.particles=[];world.exit={x:1370,y:900,r:30};world.tint=map.tint;world.floor=map.floor;world.grid=map.grid;
+    squad=mode==='squad'?[{x:140,y:145,c:'#60a5fa',name:'الحارس'},{x:75,y:175,c:'#4ade80',name:'الكشاف'},{x:155,y:90,c:'#fbbf24',name:'الداعم'}]:[];
+    showOnly(null);ui.hud.classList.remove('hidden');ui.hint.classList.remove('hidden');if(matchMedia('(pointer:coarse)').matches)ui.touch.classList.remove('hidden');else ui.touch.classList.add('hidden');updateHUD();toast('الخريطة: '+map.name+' — اجمع نوى قوتا الثلاث',2800);tone(120,.25,'triangle');}
+  function updateHUD(){ $('healthText').textContent=Math.ceil(player.hp);$('healthFill').style.width=player.hp+'%';$('healthFill').style.background=player.hp<30?'#fb7185':'#4ade80';$('coreText').textContent=player.cores+'/3';$('objective').textContent=player.cores<3?'ابحث عن نوى قوتا':'اذهب إلى بوابة الخروج'}
+  function collides(x,y,r){if(x-r<0||y-r<0||x+r>world.w||y+r>world.h)return true;return world.walls.some(w=>x+r>w.x&&x-r<w.x+w.w&&y+r>w.y&&y-r<w.y+w.h)}
+  function moveEntity(entity,dx,dy){if(!collides(entity.x+dx,entity.y,entity.r))entity.x+=dx;if(!collides(entity.x,entity.y+dy,entity.r))entity.y+=dy}
+  function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+  function lineOfSight(a,b){const n=12;for(let i=1;i<n;i++){const t=i/n,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;if(world.walls.some(w=>x>w.x&&x<w.x+w.w&&y>w.y&&y<w.y+w.h))return false}return true}
+  function damagePlayer(amount){if(player.invuln>0)return;player.hp=Math.max(0,player.hp-amount);player.invuln=.65;tone(75,.2,'sawtooth',.09);updateHUD();if(player.hp<=0)finish(false,'استولى الظلام على الروبوت. حاول تغيير طريقك أو استخدام نبضة الطاقة.')}
+  function finish(win,text){if(gameOver)return;gameOver=true;running=false;paused=false;ui.hud.classList.add('hidden');ui.hint.classList.add('hidden');ui.touch.classList.add('hidden');$('resultTitle').textContent=win?'🏆 وصلت إلى قوتا!':'💀 انتهت المهمة';$('resultText').textContent=text;showOnly('result');if(win)tone(520,.4,'sine',.09)}
+  function pulse(){if(!running||paused||player.cooldown>0||player.energy<25)return;player.cooldown=.7;player.energy-=25;const radius=155;let hits=0;world.monsters.forEach(m=>{if(!m.hidden&&distance(player,m)<radius){m.hp-=34;m.stun=.75;m.flash=.2;hits++;for(let i=0;i<8;i++)world.particles.push({x:m.x,y:m.y,vx:(Math.random()-.5)*140,vy:(Math.random()-.5)*140,life:.45,color:'#67e8f9'})}});world.particles.push({ring:true,x:player.x,y:player.y,r:0,max:radius,life:.35});tone(460,.18,'square',.08);if(hits)toast('نبضة الطاقة أصابت '+hits+' وحش');else toast('نبضة الطاقة — لا يوجد وحش قريب',850)}
+  function shootMonster(m){const dx=player.x-m.x,dy=player.y-m.y,d=Math.hypot(dx,dy)||1;world.shots.push({x:m.x,y:m.y,vx:dx/d*230,vy:dy/d*230,r:8,life:3,color:'#c084fc'});tone(260,.1,'sawtooth',.035)}
+  function updateMonster(m,dt){if(m.hp<=0)return;const d=distance(m,player),dx=(player.x-m.x)/(d||1),dy=(player.y-m.y)/(d||1);m.attack-=dt;m.stun=Math.max(0,m.stun-dt);m.flash=Math.max(0,m.flash-dt);m.phase+=dt*3;
+    if(m.type==='hunter'){if(m.stun<=0&&d<430){const speed=m.speed*(d<90?1.18:1);moveEntity(m,dx*speed*dt,dy*speed*dt)}if(d<m.r+player.r+4&&m.attack<=0){m.attack=.85;damagePlayer(13)}}
+    else if(m.type==='spitter'){if(d<370&&d>205&&m.stun<=0){const side=Math.sin(m.phase)*.4;moveEntity(m,(-dy*side)*m.speed*dt,(dx*side)*m.speed*dt)}if(d<400&&m.attack<=0&&lineOfSight(m,player)){m.attack=1.65;m.shot-=dt;shootMonster(m)}if(d<m.r+player.r+2&&m.attack<=0){m.attack=1;damagePlayer(8)}}
+    else if(m.type==='lurker'){m.hidden=Math.max(0,m.hidden-dt);if(m.stun<=0&&d>95&&d<330){const speed=m.speed*(m.hidden>0?.25:1);moveEntity(m,dx*speed*dt,dy*speed*dt)}if(m.attack<=0&&d<285&&m.hidden<=0){m.attack=3.4;m.hidden=.7;const tx=player.x-dx*65,ty=player.y-dy*65;if(!collides(tx,ty,m.r)){m.x=tx;m.y=ty}setTimeout(()=>{if(running){m.hidden=0;m.flash=.2}},500)}if(m.hidden<=0&&d<m.r+player.r+9&&m.attack>2.6){damagePlayer(18);m.attack=2.2}}
+  }
+  function update(dt){if(!running||paused)return;elapsed+=dt;player.cooldown=Math.max(0,player.cooldown-dt);player.invuln=Math.max(0,player.invuln-dt);player.energy=Math.min(100,player.energy+10*dt);
+    let x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),y=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);const len=Math.hypot(x,y)||1;x/=len;y/=len;const speed=205*(settings.sensitivity/100)*(keys.shift?1.45:1);moveEntity(player,x*speed*dt,y*speed*dt);if(x||y)player.dir=Math.atan2(y,x);
+    for(const c of world.cores){if(!c.taken&&Math.hypot(player.x-c.x,player.y-c.y)<player.r+20){c.taken=true;player.cores++;tone(520,.18,'sine',.07);toast('تم جمع نواة قوتا '+player.cores+'/3');updateHUD()}}
+    world.monsters.forEach(m=>updateMonster(m,dt));world.monsters=world.monsters.filter(m=>m.hp>0);
+    world.shots=world.shots.filter(s=>{s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;if(s.life<=0||collides(s.x,s.y,s.r))return false;if(Math.hypot(s.x-player.x,s.y-player.y)<s.r+player.r){damagePlayer(11);return false}return true});
+    world.particles=world.particles.filter(p=>{p.life-=dt;if(p.ring)p.r+=(p.max/0.35)*dt;else{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.96;p.vy*=.96}return p.life>0});
+    if(mode==='squad'){squad.forEach((b,i)=>{const target=i===0?player:squad[i-1],d=distance(b,target);if(d>50){const dx=(target.x-b.x)/d,dy=(target.y-b.y)/d;const nx=b.x+dx*85*dt,ny=b.y+dy*85*dt;if(!collides(nx,ny,10)){b.x=nx;b.y=ny}}world.monsters.forEach(m=>{if(distance(b,m)<105&&m.hp>0&&Math.random()<dt*.55){m.hp-=10;world.particles.push({x:m.x,y:m.y,vx:0,vy:-30,life:.2,color:b.c})}})})}
+    if(player.cores===3&&distance(player,world.exit)<world.exit.r+player.r)finish(true,'نجحت في جمع نوى قوتا والهروب من '+maps[selectedMap].name+'.');updateHUD();
+  }
+  function camera(){return{x:clamp(player.x-viewW/2,0,world.w-viewW),y:clamp(player.y-viewH/2,0,world.h-viewH)}}
+  function draw(){ctx.clearRect(0,0,viewW,viewH);ctx.fillStyle=world.floor;ctx.fillRect(0,0,viewW,viewH);const cam=camera();ctx.save();ctx.translate(-cam.x,-cam.y);
+    ctx.fillStyle=world.grid;for(let x=0;x<world.w;x+=60)for(let y=0;y<world.h;y+=60)ctx.strokeRect(x,y,60,60);
+    // Map-specific environmental decoration
+    if(selectedMap==='forest'){for(let i=0;i<24;i++){const x=(i*173+91)%world.w,y=(i*271+37)%world.h;ctx.fillStyle='#06150f';ctx.beginPath();ctx.arc(x,y,22+(i%3)*7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#183426';ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);ctx.fill()}}
+    if(selectedMap==='station'){for(let i=0;i<4;i++){ctx.fillStyle='#09090b';ctx.fillRect(80,260+i*125,world.w-160,28);ctx.fillStyle='#475569';ctx.fillRect(80,274+i*125,world.w-160,3)}}
+    world.walls.forEach(w=>{ctx.fillStyle=selectedMap==='forest'?'#172a20':selectedMap==='station'?'#292638':'#1f2937';ctx.fillRect(w.x,w.y,w.w,w.h);ctx.strokeStyle=selectedMap==='forest'?'#365443':'#64748b';ctx.lineWidth=2;ctx.strokeRect(w.x,w.y,w.w,w.h);ctx.fillStyle='#ffffff0a';ctx.fillRect(w.x+5,w.y+5,w.w-10,5)});
+    world.cores.forEach(c=>{if(c.taken)return;const bob=Math.sin(elapsed*3+c.pulse)*4;ctx.shadowColor='#a78bfa';ctx.shadowBlur=22;ctx.fillStyle='#a78bfa';ctx.beginPath();ctx.moveTo(c.x,c.y-15+bob);ctx.lineTo(c.x+12,c.y+bob);ctx.lineTo(c.x,c.y+15+bob);ctx.lineTo(c.x-12,c.y+bob);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.fillRect(c.x-2,c.y-3+bob,4,6)});
+    const exit=world.exit;ctx.save();ctx.shadowColor=player.cores===3?'#34d399':'#64748b';ctx.shadowBlur=25;ctx.strokeStyle=player.cores===3?'#34d399':'#64748b';ctx.lineWidth=6;ctx.beginPath();ctx.ellipse(exit.x,exit.y,24,34,0,0,Math.PI*2);ctx.stroke();ctx.restore();ctx.fillStyle='#e2e8f0';ctx.font='bold 14px Tahoma';ctx.textAlign='center';ctx.fillText(player.cores===3?'بوابة قوتا — اخرج!':'البوابة مغلقة',exit.x,exit.y-44);
+    squad.forEach(b=>drawRobot(b.x,b.y,b.c,12,false));
+    world.monsters.forEach(m=>{if(m.hidden>0)return;const t=TYPES[m.type];ctx.save();ctx.shadowColor=t.glow;ctx.shadowBlur=20;ctx.fillStyle=m.flash>0?'#fff':t.color;ctx.beginPath();if(m.type==='spitter'){ctx.moveTo(m.x,m.y-m.r);ctx.lineTo(m.x+m.r,m.y);ctx.lineTo(m.x,m.y+m.r);ctx.lineTo(m.x-m.r,m.y);ctx.closePath()}else if(m.type==='lurker'){for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.lineTo(m.x+Math.cos(a)*(i%2?m.r*.7:m.r),m.y+Math.sin(a)*(i%2?m.r*.7:m.r))}ctx.closePath()}else ctx.arc(m.x,m.y,m.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#111827';ctx.fillRect(m.x-7,m.y-4,4,4);ctx.fillRect(m.x+4,m.y-4,4,4);if(m.hp<m.maxHp){ctx.fillStyle='#450a0a';ctx.fillRect(m.x-18,m.y-m.r-9,36,4);ctx.fillStyle='#fb7185';ctx.fillRect(m.x-18,m.y-m.r-9,36*m.hp/m.maxHp,4)}ctx.restore()});
+    world.shots.forEach(s=>{ctx.fillStyle=s.color;ctx.shadowColor=s.color;ctx.shadowBlur=14;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0});world.particles.forEach(p=>{if(p.ring){ctx.strokeStyle=`rgba(103,232,249,${p.life/.35})`;ctx.lineWidth=4;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.stroke()}else{ctx.globalAlpha=Math.max(0,p.life*2);ctx.fillStyle=p.color;ctx.fillRect(p.x-3,p.y-3,6,6);ctx.globalAlpha=1}});
+    drawRobot(player.x,player.y,'#67e8f9',16,true);ctx.restore();
+    // darkness vignette: flashlight cone follows direction
+    const px=player.x-cam.x,py=player.y-cam.y;const grad=ctx.createRadialGradient(px,py,90,px,py,Math.max(viewW,viewH)*.72);grad.addColorStop(0,'rgba(0,0,0,0)');grad.addColorStop(.38,'rgba(0,0,0,.18)');grad.addColorStop(1,'rgba(0,0,0,.86)');ctx.fillStyle=grad;ctx.fillRect(0,0,viewW,viewH);
+    ctx.save();ctx.globalCompositeOperation='destination-out';const light=ctx.createRadialGradient(px,py,15,px,py,300);light.addColorStop(0,'rgba(0,0,0,.94)');light.addColorStop(.7,'rgba(0,0,0,.7)');light.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=light;ctx.beginPath();ctx.arc(px,py,300,0,Math.PI*2);ctx.fill();ctx.restore();
+    if(player.invuln>0){ctx.fillStyle=`rgba(248,113,113,${.08+Math.sin(elapsed*30)*.04})`;ctx.fillRect(0,0,viewW,viewH)}
+  }
+  function drawRobot(x,y,color,size,aim){ctx.save();ctx.translate(x,y);if(aim)ctx.rotate(player.dir);ctx.shadowColor=color;ctx.shadowBlur=18;ctx.fillStyle=color;ctx.fillRect(-size,-size,size*2,size*2);ctx.shadowBlur=0;ctx.fillStyle='#082f49';ctx.fillRect(-size*.56,-size*.42,size*.35,size*.25);ctx.fillRect(size*.2,-size*.42,size*.35,size*.25);ctx.fillStyle='#e0f2fe';ctx.fillRect(-size*.48,-size*.36,size*.16,size*.12);ctx.fillRect(size*.27,-size*.36,size*.16,size*.12);ctx.fillStyle='#164e63';ctx.fillRect(-size*.68,size*.62,size*1.36,4);ctx.restore()}
+  function loop(now){const dt=Math.min(.04,(now-lastTime)/1000||0);lastTime=now;if(running&&!paused)update(dt);draw();requestAnimationFrame(loop)}
+  function downKey(e){const k=e.key.toLowerCase();if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();keys[k]=true;if(k===' '||k==='f')pulse();if(k==='escape'&&running)togglePause()}
+  function upKey(e){keys[e.key.toLowerCase()]=false}
+  function togglePause(){if(!running)return;paused=!paused;if(paused)showOnly('pause');else{showOnly(null);ui.hud.classList.remove('hidden');ui.hint.classList.remove('hidden');if(matchMedia('(pointer:coarse)').matches)ui.touch.classList.remove('hidden')}}
+  document.querySelectorAll('.map-card').forEach(card=>card.addEventListener('click',()=>{document.querySelectorAll('.map-card').forEach(c=>c.classList.remove('selected'));card.classList.add('selected');selectedMap=card.dataset.map}));
+  $('singleBtn').onclick=()=>startGame('single');$('multiBtn').onclick=()=>showOnly('lobby');$('startSquad').onclick=()=>startGame('squad');$('settingsBtn').onclick=()=>showOnly('settings');$('saveSettings').onclick=()=>{saveSettings();showOnly('menu');toast('تم حفظ الإعدادات')};document.querySelectorAll('.backMenu').forEach(b=>b.onclick=()=>showOnly('menu'));
+  $('pauseBtn').onclick=togglePause;$('resumeBtn').onclick=togglePause;$('pauseSettings').onclick=()=>{paused=true;showOnly('settings');$('saveSettings').onclick=()=>{saveSettings();showOnly('pause');toast('تم حفظ الإعدادات')}};$('quitBtn').onclick=()=>{running=false;paused=false;showOnly('menu')};$('againBtn').onclick=()=>startGame(mode);$('resultMenu').onclick=()=>{running=false;showOnly('menu')};$('touchPulse').addEventListener('pointerdown',e=>{e.preventDefault();pulse()});
+  document.querySelectorAll('[data-key]').forEach(btn=>{const key=btn.dataset.key;btn.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true;btn.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>btn.addEventListener(ev,()=>keys[key]=false))});
+  document.addEventListener('keydown',downKey);document.addEventListener('keyup',upKey);window.addEventListener('blur',()=>Object.keys(keys).forEach(k=>keys[k]=false));window.addEventListener('resize',resize);
+  settingUI();resize();showOnly('menu');requestAnimationFrame(loop);
+})();
+</script>
 </body>
 </html>
