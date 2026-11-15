@@ -1,1267 +1,1566 @@
-      });
-    }
-
-    // Achievement progress documents and earned documents.
-    let newlyUnlocked = 0;
-    for (const change of changes) {
-      transaction.set(change.progressRef, {
-        achievementId: change.achievement.id,
-        event: eventName,
-        progress: change.progress,
-        target: change.achievement.condition.target,
-        updatedAt: FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      if (!change.unlocked) continue;
-
-      newlyUnlocked++;
-      xpReward += change.achievement.reward?.xp || 0;
-      coinReward += change.achievement.reward?.coins || 0;
-
-      transaction.create(change.earnedRef, {
-        achievementId: change.achievement.id,
-        title: change.achievement.title,
-        rarity: change.achievement.rarity,
-        reward: change.achievement.reward || {},
-        completedAt: FieldValue.serverTimestamp()
-      });
-    }
-
-    const oldCompleted = player.achievementsCompleted || 0;
-    const newCompleted = Math.min(150, oldCompleted + newlyUnlocked);
-    const secretUnlocked = !secretSnapshot.exists && newCompleted >= 150;
-
-    if (secretUnlocked) {
-      coinReward += SECRET_ACHIEVEMENT.reward.coins || 0;
-      transaction.create(secretRef, {
-        achievementId: SECRET_ACHIEVEMENT.id,
-        title: SECRET_ACHIEVEMENT.title,
-        rarity: "Secret",
-        reward: SECRET_ACHIEVEMENT.reward,
-        completedAt: FieldValue.serverTimestamp()
-      });
-    }
-
-    // Award XP through the same level/boost/milestone path as other XP grants.
-    if (xpReward > 0) {
-      grantXpInTransaction(transaction, uid, player, xpReward);
-    }
-
-    if (newlyUnlocked > 0 || secretUnlocked || coinReward > 0) {
-      const actualCoins = grantCoinsInTransaction(player, coinReward);
-      transaction.update(playerDocument, {
-        coins: (player.coins || 0) + actualCoins,
-        achievementsCompleted: newCompleted,
-        secretAchievementUnlocked: secretUnlocked || player.secretAchievementUnlocked === true,
-        title: secretUnlocked ? "THE LEGEND" : (player.title || null),
-        exclusiveFrame: secretUnlocked
-          ? "the_legend_royal_gold"
-          : (player.exclusiveFrame || null),
-        updatedAt: FieldValue.serverTimestamp()
-      });
-
-      transaction.set(publicProfileRef(uid), {
-        uid,
-        displayName: player.displayName || "Player",
-        avatarId: player.avatarId || "default",
-        level: xpReward > 0 && player.level < MAX_LEVEL
-          ? getLevelData((player.totalXp || 0) + (isBoostActive(player.activeXpBoost) ? xpReward * 2 : xpReward)).level
-          : (player.level || 1),
-        totalXp: xpReward > 0 && player.level < MAX_LEVEL
-          ? (player.totalXp || 0) + (isBoostActive(player.activeXpBoost) ? xpReward * 2 : xpReward)
-          : (player.totalXp || 0),
-        achievementsCompleted: newCompleted,
-        updatedAt: FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      transaction.set(globalEntryRef(uid), {
-        uid,
-        displayName: player.displayName || "Player",
-        avatarId: player.avatarId || "default",
-        level: xpReward > 0 && player.level < MAX_LEVEL
-          ? getLevelData((player.totalXp || 0) + (isBoostActive(player.activeXpBoost) ? xpReward * 2 : xpReward)).level
-          : (player.level || 1),
-        totalXp: xpReward > 0 && player.level < MAX_LEVEL
-          ? (player.totalXp || 0) + (isBoostActive(player.activeXpBoost) ? xpReward * 2 : xpReward)
-          : (player.totalXp || 0),
-        updatedAt: FieldValue.serverTimestamp()
-      }, { merge: true });
-    }
-
-    transaction.create(receiptRef, {
-      event: eventName,
-      eventId,
-      createdAt: FieldValue.serverTimestamp(),
-      unlockedCount: newlyUnlocked
-    });
-
-    return {
-      unlocked: newlyUnlocked,
-      secretUnlocked,
-      achievementsCompleted: newCompleted,
-      xpReward,
-      coinReward
-    };
-  });
-
-  // Keep the "complete N achievements" meta-achievement synchronized without
-  // allowing an infinite self-trigger when that meta-achievement unlocks.
-  if (
-    eventName !== "achievements_completed" &&
-    eventResult.unlocked > 0 &&
-    Number.isFinite(eventResult.achievementsCompleted)
-  ) {
-    const metaResult = await awardAchievementEvent(uid, "achievements_completed", {
-      eventId: `meta-${eventName}-${eventId}`,
-      amount: eventResult.unlocked,
-      value: eventResult.achievementsCompleted
-    });
-    eventResult.metaUnlocked = metaResult.unlocked || 0;
-  }
-
-  return eventResult;
-}
-
-// ------------------------------
-// PLAYER CREATION (AUTH V1 TRIGGER)
-// ------------------------------
-
-exports.createPlayerProfile = functionsV1.auth.user().onCreate(async (user) => {
-  const uid = user.uid;
-  const pRef = playerRef(uid);
-  const ppRef = publicProfileRef(uid);
-  const entryRef = globalEntryRef(uid);
-  const displayName = (user.displayName || "Player").trim().slice(0, 24) || "Player";
-
-  await db.runTransaction(async (transaction) => {
-    const existing = await transaction.get(pRef);
-    if (existing.exists) return;
-
-    const now = FieldValue.serverTimestamp();
-    const initialPlayer = {
-      uid,
-      displayName,
-      avatarId: "default",
-      level: 1,
-      xp: 0,
-      totalXp: 0,
-      xpToNextLevel: 100,
-      coins: 0,
-      achievementsCompleted: 0,
-      attendanceStreak: 0,
-      lastAttendanceDay: null,
-      activeXpBoost: null,
-      activeCoinsBoost: null,
-      activeGameSessionId: null,
-      createdAt: now,
-      updatedAt: now
-    };
-
-    transaction.create(pRef, initialPlayer);
-    transaction.set(ppRef, {
-      uid, displayName, avatarId: "default", level: 1,
-      totalXp: 0, achievementsCompleted: 0, createdAt: now, updatedAt: now
-    });
-    transaction.set(entryRef, {
-      uid, displayName, avatarId: "default", level: 1,
-      totalXp: 0, createdAt: now, updatedAt: now
-    });
-  });
-
-  await awardAchievementEvent(uid, "site_login", {
-    eventId: `account-created-${uid}`,
-    amount: 1,
-    value: 1
-  });
-});
-
-// ------------------------------
-// PLAYER PROFILE UPDATE
-// ------------------------------
-
-exports.updatePlayerProfile = onCall({ region: REGION }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-
-  const uid = request.auth.uid;
-  const displayName = String(request.data?.displayName || "").trim();
-  const avatarId = String(request.data?.avatarId || "default").trim();
-
-  if (displayName.length < 2 || displayName.length > 24) {
-    throw new HttpsError("invalid-argument", "Display name must be 2–24 characters.");
-  }
-  // Avatar IDs are identifiers from the site's local avatar library, never URLs.
-  if (!/^(default|avatar_[0-9]{2})$/.test(avatarId)) {
-    throw new HttpsError("invalid-argument", "Invalid avatar ID.");
-  }
-
-  const pRef = playerRef(uid);
-  await db.runTransaction(async (transaction) => {
-    const snapshot = await transaction.get(pRef);
-    if (!snapshot.exists) throw new HttpsError("failed-precondition", "Player profile missing.");
-    transaction.update(pRef, {
-      displayName,
-      avatarId,
-      updatedAt: FieldValue.serverTimestamp()
-    });
-    transaction.set(publicProfileRef(uid), {
-      uid, displayName, avatarId,
-      level: snapshot.data().level || 1,
-      totalXp: snapshot.data().totalXp || 0,
-      achievementsCompleted: snapshot.data().achievementsCompleted || 0,
-      updatedAt: FieldValue.serverTimestamp()
-    }, { merge: true });
-    transaction.set(globalEntryRef(uid), {
-      uid, displayName, avatarId,
-      level: snapshot.data().level || 1,
-      totalXp: snapshot.data().totalXp || 0,
-      updatedAt: FieldValue.serverTimestamp()
-    }, { merge: true });
-  });
-
-  const results = await Promise.all([
-    awardAchievementEvent(uid, "display_name_set", {
-      eventId: `profile-name-${Date.now()}`, amount: 1, value: 1
-    }),
-    awardAchievementEvent(uid, "avatar_equipped", {
-      eventId: `profile-avatar-${Date.now()}`, amount: 1, value: 1
-    }),
-    awardAchievementEvent(uid, "profile_completed", {
-      eventId: `profile-complete-${Date.now()}`, amount: 1, value: 1
-    })
-  ]);
-
-  return { success: true, displayName, avatarId, achievementsUnlocked: results.reduce((n, r) => n + (r.unlocked || 0), 0) };
-});
-
-// ------------------------------
-// DAILY ATTENDANCE: 50 COINS + 500 ON DAY 7
-// ------------------------------
-
-exports.dailyCheckIn = onCall({ region: REGION }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-
-  const uid = request.auth.uid;
-  const today = getEgyptDate();
-  const pRef = playerRef(uid);
-  const attendanceRef = db.collection("attendance").doc(uid)
-    .collection("days").doc(today);
-  const transactionRef = db.collection("transactions").doc(uid)
-    .collection("items").doc();
-
-  const result = await db.runTransaction(async (transaction) => {
-    const [attendanceSnapshot, playerSnapshot] = await Promise.all([
-      transaction.get(attendanceRef),
-      transaction.get(pRef)
-    ]);
-
-    if (attendanceSnapshot.exists) {
-      const prior = attendanceSnapshot.data();
-      return {
-        success: true,
-        alreadyCheckedIn: true,
-        streak: prior.streak || 0,
-        dailyReward: prior.dailyReward || 0,
-        weeklyReward: prior.weeklyReward || 0,
-        totalReward: prior.actualReward ?? prior.totalReward ?? 0
-      };
-    }
-    if (!playerSnapshot.exists) {
-      throw new HttpsError("failed-precondition", "Player profile does not exist.");
-    }
-
-    const player = playerSnapshot.data();
-    const previousDay = player.lastAttendanceDay;
-    const streak = previousDay && dayDifference(previousDay, today) === 1
-      ? (player.attendanceStreak || 0) + 1
-      : 1;
-
-    const dailyReward = 50;
-    const weeklyReward = streak % 7 === 0 ? 500 : 0;
-    const baseReward = dailyReward + weeklyReward;
-    const actualReward = grantCoinsInTransaction(player, baseReward);
-
-    transaction.update(pRef, {
-      coins: (player.coins || 0) + actualReward,
-      attendanceStreak: streak,
-      lastAttendanceDay: today,
-      updatedAt: FieldValue.serverTimestamp()
-    });
-    transaction.create(attendanceRef, {
-      uid, date: today, streak, dailyReward, weeklyReward,
-      baseReward, actualReward, createdAt: FieldValue.serverTimestamp()
-    });
-    transaction.create(transactionRef, {
-      type: "attendance", amount: actualReward, baseAmount: baseReward,
-      dailyReward, weeklyReward, createdAt: FieldValue.serverTimestamp()
-    });
-
-    return {
-      success: true, alreadyCheckedIn: false, streak,
-      dailyReward, weeklyReward, totalReward: actualReward
-    };
-  });
-
-  // Re-run safely on duplicate requests: each event receipt is idempotent.
-  await Promise.all([
-    awardAchievementEvent(uid, "daily_checkin", {
-      eventId: `checkin-${today}`, amount: 1, value: 1
-    }),
-    awardAchievementEvent(uid, "attendance_streak", {
-      eventId: `attendance-streak-${today}`, amount: 1, value: result.streak || 1
-    }),
-    awardAchievementEvent(uid, "coins_earned", {
-      eventId: `attendance-coins-${today}`, amount: result.totalReward || 0, value: result.totalReward || 0
-    })
-  ]);
-  return result;
-});
-
-// ------------------------------
-// ADMIN XP GRANT
-// ------------------------------
-
-exports.adminGrantXp = onCall({ region: REGION }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-  await verifyAdmin(request.auth.uid);
-
-  const uid = request.data?.uid;
-  const amount = safeInteger(request.data?.amount, 1, 10000, "XP amount");
-  if (typeof uid !== "string" || uid.length < 10 || uid.length > 128) {
-    throw new HttpsError("invalid-argument", "Invalid player UID.");
-  }
-
-  const pRef = playerRef(uid);
-  const result = await db.runTransaction(async (transaction) => {
-    const snapshot = await transaction.get(pRef);
-    if (!snapshot.exists) throw new HttpsError("not-found", "Player not found.");
-    return grantXpInTransaction(transaction, uid, snapshot.data(), amount);
-  });
-
-  if (result.level) {
-    await awardAchievementEvent(uid, "player_level", {
-      eventId: `admin-xp-${randomBytes(8).toString("hex")}`,
-      amount: 1, value: result.level
-    });
-  }
-  return { success: true, ...result };
-});
-
-// ------------------------------
-// ACTIVATE XP / COINS BOOSTS
-// ------------------------------
-
-async function activateBoostForUser(uid, boostId, expectedType) {
-  if (typeof boostId !== "string" || !/^[A-Za-z0-9_-]{1,150}$/.test(boostId)) {
-    throw new HttpsError("invalid-argument", "Invalid boost ID.");
-  }
-
-  const pRef = playerRef(uid);
-  const inventoryRef = inventoryItemsRef(uid).doc(boostId);
-  // Backward compatibility for milestone boosts stored by the previous backend.
-  const legacyBoostRef = db.collection("boosts").doc(uid)
-    .collection("items").doc(boostId);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const [playerSnapshot, inventorySnapshot, legacySnapshot] = await Promise.all([
-      transaction.get(pRef),
-      transaction.get(inventoryRef),
-      transaction.get(legacyBoostRef)
-    ]);
-
-    if (!playerSnapshot.exists) throw new HttpsError("not-found", "Player not found.");
-    const player = playerSnapshot.data();
-    const boostSnapshot = inventorySnapshot.exists ? inventorySnapshot : legacySnapshot;
-    const boostRef = inventorySnapshot.exists ? inventoryRef : legacyBoostRef;
-
-    if (!boostSnapshot.exists) throw new HttpsError("not-found", "Boost not found.");
-    const boost = boostSnapshot.data();
-
-    if (boost.type !== expectedType || boost.status !== "stored") {
-      throw new HttpsError("failed-precondition", "This boost is not available.");
-    }
-
-    const activeKey = expectedType === "xp_boost" ? "activeXpBoost" : "activeCoinsBoost";
-    if (isBoostActive(player[activeKey])) {
-      throw new HttpsError("failed-precondition", "A boost of this type is already active.");
-    }
-
-    const durationMinutes = Number(boost.durationMinutes || (boost.durationHours || 1) * 60);
-    if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 1440) {
-      throw new HttpsError("failed-precondition", "Invalid boost duration.");
-    }
-
-    const now = Date.now();
-    const activatedAt = Timestamp.fromMillis(now);
-    const expiresAt = Timestamp.fromMillis(now + durationMinutes * 60000);
-
-    transaction.update(boostRef, {
-      status: "used", activatedAt, expiresAt
-    });
-    transaction.update(pRef, {
-      [activeKey]: { multiplier: 2, activatedAt, expiresAt },
-      updatedAt: FieldValue.serverTimestamp()
-    });
-
-    return {
-      success: true, type: expectedType, multiplier: 2,
-      durationMinutes, expiresAt: expiresAt.toDate().toISOString()
-    };
-  });
-
-  await awardAchievementEvent(uid, expectedType === "xp_boost"
-    ? "xp_boost_activated" : "coins_boost_activated", {
-      eventId: `${expectedType}-${boostId}`,
-      amount: 1, value: 1
-    });
-
-  return result;
-}
-
-exports.activateXpBoost = onCall({ region: REGION }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-  return activateBoostForUser(request.auth.uid, request.data?.boostId, "xp_boost");
-});
-
-exports.activateCoinsBoost = onCall({ region: REGION }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-  return activateBoostForUser(request.auth.uid, request.data?.boostId, "coins_boost");
-});
-
-// ------------------------------
-// ADMIN: CREATE ONE-TIME REDEEM CODE
-// ------------------------------
-
-exports.adminCreateRedeemCode = onCall({ region: REGION }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-  await verifyAdmin(request.auth.uid);
-
-  const data = request.data || {};
-  const type = data.type;
-  if (!["coins", "xp_boost", "coins_boost"].includes(type)) {
-    throw new HttpsError("invalid-argument", "Invalid code type.");
-  }
-
-  let reward = {};
-  if (type === "coins") {
-    if (!ALLOWED_COIN_REWARDS.includes(data.amount)) {
-      throw new HttpsError("invalid-argument", "Invalid coin amount.");
-    }
-    reward = { amount: data.amount };
-  } else {
-    const durationHours = safeInteger(data.durationHours, 1, 24, "boost duration");
-    reward = { multiplier: 2, durationHours };
-  }
-
-  const code = "IMG-" + randomBytes(5).toString("hex").toUpperCase();
-  const codeHash = hashRedeemCode(code);
-  const codeRef = db.collection("redeemCodes").doc(codeHash);
-  const logRef = db.collection("adminLogs").doc();
-
-  await db.runTransaction(async (transaction) => {
-    transaction.create(codeRef, {
-      type, ...reward, used: false, usedBy: null,
-      createdBy: request.auth.uid,
-      createdAt: FieldValue.serverTimestamp()
-    });
-    transaction.create(logRef, {
-      adminUid: request.auth.uid,
-      action: "create_redeem_code",
-      codeType: type,
-      createdAt: FieldValue.serverTimestamp()
-    });
-  });
-
-  return { success: true, code, type, ...reward };
-});
-
-// ------------------------------
-// PLAYER: REDEEM ONE-TIME CODE
-// ------------------------------
-
-exports.redeemStoreCode = onCall({ region: REGION }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-
-  const uid = request.auth.uid;
-  const rawCode = request.data?.code;
-  if (typeof rawCode !== "string" || rawCode.trim().length < 8 || rawCode.trim().length > 40) {
-    throw new HttpsError("invalid-argument", "Invalid code.");
-  }
-
-  const codeHash = hashRedeemCode(rawCode);
-  const codeRef = db.collection("redeemCodes").doc(codeHash);
-  const pRef = playerRef(uid);
-  const inventoryRef = inventoryItemsRef(uid).doc();
-  const transactionRef = db.collection("transactions").doc(uid)
-    .collection("items").doc();
-
-  const result = await db.runTransaction(async (transaction) => {
-    const [codeSnapshot, playerSnapshot] = await Promise.all([
-      transaction.get(codeRef), transaction.get(pRef)
-    ]);
-
-    if (!codeSnapshot.exists) throw new HttpsError("not-found", "Code not found.");
-    if (!playerSnapshot.exists) throw new HttpsError("failed-precondition", "Player profile missing.");
-
-    const codeData = codeSnapshot.data();
-    if (codeData.used === true) {
-      throw new HttpsError("already-exists", "This code has already been redeemed.");
-    }
-
-    const now = FieldValue.serverTimestamp();
-    const player = playerSnapshot.data();
-
-    if (codeData.type === "coins") {
-      if (!ALLOWED_COIN_REWARDS.includes(codeData.amount)) {
-        throw new HttpsError("failed-precondition", "Invalid reward configuration.");
-      }
-      const actualAmount = grantCoinsInTransaction(player, codeData.amount);
-      transaction.update(pRef, {
-        coins: (player.coins || 0) + actualAmount,
-        updatedAt: now
-      });
-      transaction.create(transactionRef, {
-        type: "redeem_code", amount: actualAmount,
-        baseAmount: codeData.amount, createdAt: now
-      });
-    } else if (codeData.type === "xp_boost" || codeData.type === "coins_boost") {
-      const durationHours = codeData.durationHours;
-      if (!Number.isInteger(durationHours) || durationHours < 1 || durationHours > 24 || codeData.multiplier !== 2) {
-        throw new HttpsError("failed-precondition", "Invalid boost configuration.");
-      }
-      transaction.create(inventoryRef, {
-        type: codeData.type, multiplier: 2,
-        durationHours, durationMinutes: durationHours * 60,
-        status: "stored", source: "redeem_code", createdAt: now
-      });
-      transaction.create(transactionRef, {
-        type: "redeem_code", rewardType: codeData.type,
-        durationHours, createdAt: now
-      });
-    } else {
-      throw new HttpsError("failed-precondition", "Unsupported code reward.");
-    }
-
-    transaction.update(codeRef, {
-      used: true, usedBy: uid, usedAt: now
-    });
-
-    return {
-      success: true, rewardType: codeData.type,
-      amount: codeData.type === "coins" ? codeData.amount : null,
-      message: "Code redeemed successfully."
-    };
-  });
-
-  if (result.rewardType === "coins") {
-    await awardAchievementEvent(uid, "coins_earned", {
-      eventId: `redeem-${codeHash}`, amount: result.amount, value: result.amount
-    });
-  }
-  return result;
-});
-
-// ------------------------------
-// READ-ONLY CALLABLE: ACHIEVEMENT CATALOG METADATA
-// ------------------------------
-
-exports.getAchievementCatalog = onCall({ region: REGION }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-  return {
-    schemaVersion: achievementCatalog.schemaVersion,
-    baseAchievementCount: achievementCatalog.baseAchievementCount,
-    secretAchievementCount: achievementCatalog.secretAchievementCount,
-    rarityDistribution: achievementCatalog.rarityDistribution,
-    rewardPolicy: achievementCatalog.rewardPolicy,
-    achievements: BASE_ACHIEVEMENTS.map((item) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      category: item.category,
-      rarity: item.rarity,
-      scope: item.scope,
-      condition: item.condition,
-      reward: item.reward,
-      status: item.status
-    }))
-  };
-});const { onUserCreated } = require("firebase-functions/v2/identity");
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { randomBytes, createHash } = require("node:crypto");
-const { initializeApp } = require("firebase-admin/app");
-const {
-  getFirestore,
-  FieldValue,
-  Timestamp
-} = require("firebase-admin/firestore");
+'use strict';
+
+// I.M.G GAMING - Firebase Functions backend (Node.js 20)
+// This backend intentionally does NOT accept arbitrary game events from clients.
+// Competitive/gameplay achievements remain locked until a game has trusted server validation.
+
+const crypto = require('node:crypto');
+const functionsV1 = require('firebase-functions/v1');
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
+const catalog = require('./achievement-catalog.json');
 
 initializeApp();
-
 const db = getFirestore();
-const REGION = "europe-west1";
-const TIME_ZONE = "Africa/Cairo";
+
+const REGION = 'europe-west1';
+const TIME_ZONE = 'Africa/Cairo';
 const MAX_LEVEL = 100;
-const XP_BOOST_DURATION = 60 * 60 * 1000;
+const DAILY_COINS = 50;
+const WEEKLY_STREAK_BONUS = 500;
 
-// ------------------------------
-// DATE HELPERS
-// ------------------------------
+const ALLOWED_COIN_REWARDS = [
+  100, 250, 500, 1000, 2000, 5000
+];
 
-function getEgyptDate() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).formatToParts(new Date());
+const BASE_ACHIEVEMENTS = Array.isArray(catalog.achievements)
+  ? catalog.achievements
+  : [];
 
-  const values = {};
-  for (const part of parts) {
-    values[part.type] = part.value;
+const SECRET_ACHIEVEMENT = catalog.secretAchievement;
+
+if (BASE_ACHIEVEMENTS.length !== 150 || !SECRET_ACHIEVEMENT) {
+  throw new Error(
+    'Achievement catalog must contain exactly 150 base achievements and one secret achievement.'
+  );
+}
+
+// ------------------------------------
+// FIRESTORE REFERENCES
+// ------------------------------------
+
+const playerRef = (uid) =>
+  db.collection('players').doc(uid);
+
+const publicProfileRef = (uid) =>
+  db.collection('publicProfiles').doc(uid);
+
+const globalEntryRef = (uid) =>
+  db.collection('leaderboards')
+    .doc('global')
+    .collection('entries')
+    .doc(uid);
+
+const inventoryRef = (uid) =>
+  db.collection('inventory')
+    .doc(uid)
+    .collection('items');
+
+const achievementProgressRef = (uid, id) =>
+  db.collection('achievementProgress')
+    .doc(uid)
+    .collection('items')
+    .doc(id);
+
+const playerAchievementRef = (uid, id) =>
+  db.collection('playerAchievements')
+    .doc(uid)
+    .collection('items')
+    .doc(id);
+
+const achievementReceiptRef = (uid, id) =>
+  db.collection('achievementReceipts')
+    .doc(uid)
+    .collection('items')
+    .doc(id);
+
+// ------------------------------------
+// GENERAL HELPERS
+// ------------------------------------
+
+function requireAuth(request) {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Sign in first.');
   }
+
+  return request.auth.uid;
+}
+
+function safeInteger(value, min, max, label) {
+  if (
+    !Number.isSafeInteger(value) ||
+    value < min ||
+    value > max
+  ) {
+    throw new HttpsError(
+      'invalid-argument',
+      `Invalid ${label}.`
+    );
+  }
+
+  return value;
+}
+
+function egyptDate(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(
+    parts.map((p) => [p.type, p.value])
+  );
 
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-function dayDifference(first, second) {
-  const a = new Date(`${first}T00:00:00Z`);
-  const b = new Date(`${second}T00:00:00Z`);
+function dayDifference(previous, current) {
+  const a = Date.parse(`${previous}T00:00:00Z`);
+  const b = Date.parse(`${current}T00:00:00Z`);
+
   return Math.round((b - a) / 86400000);
 }
 
-// ------------------------------
-// LEVEL SYSTEM
-// ------------------------------
-
-function getLevelData(totalXp) {
-  let level = 1;
-  let remaining = Math.max(0, totalXp);
-
-  while (level < MAX_LEVEL) {
-    const required = level * 100;
-
-    if (remaining < required) {
-      return {
-        level,
-        xp: remaining,
-        xpToNextLevel: required
-      };
-    }
-
-    remaining -= required;
-    level++;
+function activeBoost(boost, now = Date.now()) {
+  if (!boost || !boost.expiresAt) {
+    return false;
   }
 
-  return {
-    level: MAX_LEVEL,
-    xp: 0,
-    xpToNextLevel: 0
-  };
+  const expiry =
+    typeof boost.expiresAt.toMillis === 'function'
+      ? boost.expiresAt.toMillis()
+      : new Date(boost.expiresAt).getTime();
+
+  return Number.isFinite(expiry) && expiry > now;
 }
 
-// Must be called inside a Firestore transaction.
-// totalXp is the player's lifetime XP.
-function grantXpInTransaction(transaction, uid, player, baseAmount) {
-  const oldLevel = player.level || 1;
-  const now = Date.now();
+function nextLevelCost(level) {
+  return level * 100;
+}
 
-  let multiplier = 1;
-  const activeBoost = player.activeXpBoost;
+// ------------------------------------
+// PUBLIC PROFILE AND LEADERBOARD SYNC
+// ------------------------------------
 
+function addPublicRankingWrites(
+  transaction,
+  uid,
+  player,
+  patch = {}
+) {
+  const level = patch.level ?? player.level ?? 1;
+  const totalXp = patch.totalXp ?? player.totalXp ?? 0;
+
+  const displayName =
+    patch.displayName ?? player.displayName ?? 'Player';
+
+  const avatarId =
+    patch.avatarId ?? player.avatarId ?? 'default';
+
+  const achievementsCompleted =
+    patch.achievementsCompleted ??
+    player.achievementsCompleted ??
+    0;
+
+  transaction.set(
+    publicProfileRef(uid),
+    {
+      uid,
+      displayName,
+      avatarId,
+      level,
+      totalXp,
+      achievementsCompleted,
+      updatedAt: FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
+
+  transaction.set(
+    globalEntryRef(uid),
+    {
+      uid,
+      displayName,
+      avatarId,
+      level,
+      totalXp,
+      updatedAt: FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
+}
+
+// ------------------------------------
+// XP AND LEVEL SYSTEM
+// ------------------------------------
+
+function grantXpInTransaction(
+  transaction,
+  uid,
+  player,
+  requestedAmount
+) {
   if (
-    activeBoost &&
-    activeBoost.multiplier === 2 &&
-    activeBoost.expiresAt &&
-    activeBoost.expiresAt.toMillis() > now
+    !Number.isSafeInteger(requestedAmount) ||
+    requestedAmount <= 0
   ) {
-    multiplier = 2;
-  }
-
-  const amount = Math.max(0, Math.floor(baseAmount));
-
-  if (oldLevel >= MAX_LEVEL || amount === 0) {
     return {
-      addedXp: 0,
-      level: oldLevel,
-      leveledUp: false
+      requestedXp: 0,
+      awardedXp: 0,
+      level: player.level || 1,
+      levelsGained: 0,
+      milestoneBoosts: []
     };
   }
 
-  const totalXp = (player.totalXp || 0) + amount * multiplier;
-  const levelData = getLevelData(totalXp);
+  let level = Math.min(
+    MAX_LEVEL,
+    Math.max(1, player.level || 1)
+  );
 
-  const playerRef = db.collection("players").doc(uid);
+  let xp = Math.max(0, player.xp || 0);
+  let totalXp = Math.max(0, player.totalXp || 0);
 
-  transaction.update(playerRef, {
-    totalXp,
-    level: levelData.level,
-    xp: levelData.xp,
-    xpToNextLevel: levelData.xpToNextLevel,
-    updatedAt: FieldValue.serverTimestamp()
-  });
+  const boosted = activeBoost(player.activeXpBoost);
 
-  // Every 10 levels grants one stored XP boost.
-  for (
-    let milestone = 10;
-    milestone <= levelData.level;
-    milestone += 10
-  ) {
-    if (milestone > oldLevel) {
-      const boostRef = db
-        .collection("boosts")
-        .doc(uid)
-        .collection("items")
-        .doc();
+  let remaining =
+    requestedAmount * (boosted ? 2 : 1);
 
-      transaction.set(boostRef, {
-        type: "xp_boost",
-        multiplier: 2,
-        durationMinutes: 60,
-        status: "stored",
-        createdAt: FieldValue.serverTimestamp()
-      });
+  let awardedXp = 0;
+  let levelsGained = 0;
+
+  const milestoneBoosts = [];
+
+  while (remaining > 0 && level < MAX_LEVEL) {
+    const needed = nextLevelCost(level) - xp;
+
+    const add = Math.min(remaining, needed);
+
+    xp += add;
+    remaining -= add;
+
+    awardedXp += add;
+    totalXp += add;
+
+    if (xp >= nextLevelCost(level)) {
+      xp = 0;
+      level += 1;
+      levelsGained += 1;
+
+      // Every tenth level grants a stored XP boost.
+      if (level % 10 === 0) {
+        const boostId = `milestone-xp-${level}`;
+
+        const boostDoc =
+          inventoryRef(uid).doc(boostId);
+
+        transaction.set(
+          boostDoc,
+          {
+            type: 'xp_boost',
+            multiplier: 2,
+            durationMinutes: 60,
+            status: 'stored',
+            source: 'level_milestone',
+            milestoneLevel: level,
+            createdAt: FieldValue.serverTimestamp()
+          },
+          { merge: true }
+        );
+
+        milestoneBoosts.push({
+          id: boostId,
+          level
+        });
+      }
     }
   }
 
+  transaction.update(
+    playerRef(uid),
+    {
+      level,
+      xp,
+      totalXp,
+      xpToNextLevel:
+        level >= MAX_LEVEL
+          ? 0
+          : nextLevelCost(level) - xp,
+      updatedAt: FieldValue.serverTimestamp()
+    }
+  );
+
+  addPublicRankingWrites(
+    transaction,
+    uid,
+    player,
+    { level, totalXp }
+  );
+
   return {
-    addedXp: amount * multiplier,
-    level: levelData.level,
-    leveledUp: levelData.level > oldLevel,
-    totalXp
+    requestedXp: requestedAmount,
+    awardedXp,
+    level,
+    levelsGained,
+    milestoneBoosts
   };
 }
 
-// ------------------------------
-// PLAYER CREATION
-// ------------------------------
+// ------------------------------------
+// COIN SYSTEM
+// ------------------------------------
 
-exports.createPlayerProfile = onUserCreated(
-  { region: REGION },
-  async (event) => {
-    const user = event.data;
-    if (!user) return;
-
-    const uid = user.uid;
-    const playerRef = db.collection("players").doc(uid);
-    const publicRef = db.collection("publicProfiles").doc(uid);
-
-    const displayName =
-      (user.displayName || "Player").trim().slice(0, 24) || "Player";
-
-    await db.runTransaction(async (transaction) => {
-      const snapshot = await transaction.get(playerRef);
-
-      if (snapshot.exists) return;
-
-      const now = FieldValue.serverTimestamp();
-
-      transaction.set(playerRef, {
-        uid,
-        displayName,
-        level: 1,
-        xp: 0,
-        totalXp: 0,
-        xpToNextLevel: 100,
-        coins: 0,
-        achievementsCompleted: 0,
-        attendanceStreak: 0,
-        lastAttendanceDay: null,
-        activeXpBoost: null,
-        createdAt: now,
-        updatedAt: now
-      });
-
-      transaction.set(publicRef, {
-        uid,
-        displayName,
-        avatarId: "default",
-        level: 1,
-        achievementsCompleted: 0,
-        totalXp: 0,
-        createdAt: now,
-        updatedAt: now
-      });
-    });
+function grantCoinsInTransaction(player, requestedAmount) {
+  if (
+    !Number.isSafeInteger(requestedAmount) ||
+    requestedAmount <= 0
+  ) {
+    return 0;
   }
-);
 
-// ------------------------------
-// DAILY ATTENDANCE
-// ------------------------------
+  return requestedAmount *
+    (activeBoost(player.activeCoinsBoost) ? 2 : 1);
+}
 
-exports.dailyCheckIn = onCall(
-  { region: REGION },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in first.");
-    }
+// ------------------------------------
+// ADMIN SECURITY
+// ------------------------------------
 
-    const uid = request.auth.uid;
-    const today = getEgyptDate();
+async function verifyAdmin(uid) {
+  const snapshot = await db
+    .collection('admins')
+    .doc(uid)
+    .get();
 
-    const playerRef = db.collection("players").doc(uid);
-    const attendanceRef = db
-      .collection("attendance")
-      .doc(uid)
-      .collection("days")
-      .doc(today);
+  if (
+    !snapshot.exists ||
+    snapshot.data().active !== true
+  ) {
+    throw new HttpsError(
+      'permission-denied',
+      'Admin access required.'
+    );
+  }
+}
 
-    const transactionRef = db
-      .collection("transactions")
-      .doc(uid)
-      .collection("items")
-      .doc();
+// ------------------------------------
+// ACHIEVEMENT ENGINE
+// ------------------------------------
 
-    return db.runTransaction(async (transaction) => {
-      const attendanceSnapshot = await transaction.get(attendanceRef);
-      const playerSnapshot = await transaction.get(playerRef);
+// This function is internal. There is no callable endpoint
+// that lets a client submit arbitrary achievement events.
+//
+// Metric rules:
+// count = add event amount
+// sum   = add event amount
+// max   = retain the highest value
 
-      if (attendanceSnapshot.exists) {
+async function awardAchievementEvent(
+  uid,
+  eventName,
+  payload = {}
+) {
+  const eventId = String(payload.eventId || '');
+
+  if (!/^[A-Za-z0-9_-]{1,180}$/.test(eventId)) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Invalid achievement event ID.'
+    );
+  }
+
+  const candidates = BASE_ACHIEVEMENTS.filter(
+    (a) =>
+      a.condition &&
+      a.condition.event === eventName &&
+      a.status === 'server_supported'
+  );
+
+  const receipt = achievementReceiptRef(uid, eventId);
+  const pRef = playerRef(uid);
+
+  const result = await db.runTransaction(
+    async (transaction) => {
+      const [receiptSnap, playerSnap] =
+        await Promise.all([
+          transaction.get(receipt),
+          transaction.get(pRef)
+        ]);
+
+      if (receiptSnap.exists) {
         return {
-          success: true,
-          alreadyCheckedIn: true,
-          dailyReward: 0,
-          weeklyReward: 0
+          duplicate: true,
+          unlocked: 0,
+          completed: playerSnap.exists
+            ? playerSnap.data().achievementsCompleted || 0
+            : 0,
+          level: playerSnap.exists
+            ? playerSnap.data().level || 1
+            : 1
         };
       }
 
-      if (!playerSnapshot.exists) {
+      if (!playerSnap.exists) {
         throw new HttpsError(
-          "failed-precondition",
-          "Player profile does not exist."
+          'failed-precondition',
+          'Player profile is missing.'
         );
       }
 
-      const player = playerSnapshot.data();
-      const previousDay = player.lastAttendanceDay;
+      const player = playerSnap.data();
 
-      let streak = 1;
+      const refs = candidates.map((a) => ({
+        achievement: a,
+        progressRef: achievementProgressRef(uid, a.id),
+        earnedRef: playerAchievementRef(uid, a.id)
+      }));
 
-      if (previousDay && dayDifference(previousDay, today) === 1) {
-        streak = (player.attendanceStreak || 0) + 1;
+      const snapshots = await Promise.all(
+        refs.flatMap((x) => [
+          transaction.get(x.progressRef),
+          transaction.get(x.earnedRef)
+        ])
+      );
+
+      const secretRef =
+        playerAchievementRef(
+          uid,
+          SECRET_ACHIEVEMENT.id
+        );
+
+      const secretSnap =
+        await transaction.get(secretRef);
+
+      let unlocked = 0;
+      let xpReward = 0;
+      let coinReward = 0;
+
+      const progressWrites = [];
+
+      for (let i = 0; i < refs.length; i++) {
+        const item = refs[i];
+
+        const progressSnap = snapshots[i * 2];
+        const earnedSnap = snapshots[i * 2 + 1];
+
+        if (earnedSnap.exists) {
+          continue;
+        }
+
+        const condition =
+          item.achievement.condition;
+
+        const oldValue = progressSnap.exists
+          ? Number(progressSnap.data().progress || 0)
+          : 0;
+
+        const amount =
+          Number.isFinite(payload.amount)
+            ? Math.max(0, payload.amount)
+            : 1;
+
+        const value =
+          Number.isFinite(payload.value)
+            ? Math.max(0, payload.value)
+            : amount;
+
+        let nextValue = oldValue;
+
+        if (condition.metric === 'max') {
+          nextValue = Math.max(oldValue, value);
+        } else if (
+          condition.metric === 'sum' ||
+          condition.metric === 'count'
+        ) {
+          nextValue = oldValue + amount;
+        } else {
+          continue;
+        }
+
+        const isUnlocked =
+          nextValue >= condition.target;
+
+        progressWrites.push({
+          ref: item.progressRef,
+          achievement: item.achievement,
+          progress: nextValue,
+          isUnlocked,
+          earnedRef: item.earnedRef
+        });
+
+        if (isUnlocked) {
+          unlocked++;
+
+          xpReward += Number(
+            item.achievement.reward?.xp || 0
+          );
+
+          coinReward += Number(
+            item.achievement.reward?.coins || 0
+          );
+        }
       }
 
-      const dailyReward = 50;
-      const weeklyReward = streak % 7 === 0 ? 500 : 0;
-      const totalReward = dailyReward + weeklyReward;
+      const oldCompleted =
+        Number(player.achievementsCompleted || 0);
 
-      transaction.update(playerRef, {
-        coins: (player.coins || 0) + totalReward,
-        attendanceStreak: streak,
-        lastAttendanceDay: today,
-        updatedAt: FieldValue.serverTimestamp()
-      });
+      const newCompleted =
+        Math.min(150, oldCompleted + unlocked);
 
-      transaction.set(attendanceRef, {
-        uid,
-        date: today,
-        streak,
-        dailyReward,
-        weeklyReward,
-        totalReward,
-        createdAt: FieldValue.serverTimestamp()
-      });
+      const secretUnlocked =
+        !secretSnap.exists && newCompleted >= 150;
 
-      transaction.set(transactionRef, {
-        type: "attendance",
-        amount: totalReward,
-        dailyReward,
-        weeklyReward,
-        createdAt: FieldValue.serverTimestamp()
-      });
+      if (secretUnlocked) {
+        coinReward += Number(
+          SECRET_ACHIEVEMENT.reward?.coins || 0
+        );
+      }
 
-      return {
-        success: true,
-        alreadyCheckedIn: false,
-        streak,
-        dailyReward,
-        weeklyReward,
-        totalReward
+      // All Firestore reads are complete.
+      // Writes begin here.
+
+      for (const item of progressWrites) {
+        transaction.set(
+          item.ref,
+          {
+            achievementId: item.achievement.id,
+            progress: item.progress,
+            target: item.achievement.condition.target,
+            completed: item.isUnlocked,
+            updatedAt: FieldValue.serverTimestamp()
+          },
+          { merge: true }
+        );
+
+        if (item.isUnlocked) {
+          transaction.create(
+            item.earnedRef,
+            {
+              achievementId: item.achievement.id,
+              title: item.achievement.title,
+              rarity: item.achievement.rarity,
+              category: item.achievement.category,
+              reward: item.achievement.reward,
+              completedAt: FieldValue.serverTimestamp()
+            }
+          );
+        }
+      }
+
+      let xpResult = {
+        level: player.level || 1,
+        levelsGained: 0,
+        awardedXp: 0
       };
-    });
-  }
-);
 
-// ------------------------------
-// ADMIN-ONLY XP GRANT
-// ------------------------------
-
-exports.adminGrantXp = onCall(
-  { region: REGION },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in first.");
-    }
-
-    const adminRef = db.collection("admins").doc(request.auth.uid);
-    const adminSnapshot = await adminRef.get();
-
-    if (
-      !adminSnapshot.exists ||
-      adminSnapshot.data().active !== true
-    ) {
-      throw new HttpsError("permission-denied", "Admin access required.");
-    }
-
-    const uid = request.data?.uid;
-    const amount = request.data?.amount;
-
-    if (
-      typeof uid !== "string" ||
-      !Number.isInteger(amount) ||
-      amount < 1 ||
-      amount > 10000
-    ) {
-      throw new HttpsError("invalid-argument", "Invalid XP request.");
-    }
-
-    const playerRef = db.collection("players").doc(uid);
-
-    return db.runTransaction(async (transaction) => {
-      const snapshot = await transaction.get(playerRef);
-
-      if (!snapshot.exists) {
-        throw new HttpsError("not-found", "Player not found.");
+      if (
+        xpReward > 0 &&
+        (player.level || 1) < MAX_LEVEL
+      ) {
+        xpResult = grantXpInTransaction(
+          transaction,
+          uid,
+          player,
+          xpReward
+        );
       }
 
-      const result = grantXpInTransaction(
-        transaction,
-        uid,
-        snapshot.data(),
-        amount
+      const actualCoins =
+        grantCoinsInTransaction(player, coinReward);
+
+      transaction.update(
+        pRef,
+        {
+          coins: (player.coins || 0) + actualCoins,
+          achievementsCompleted: newCompleted,
+
+          secretAchievementUnlocked:
+            secretUnlocked ||
+            player.secretAchievementUnlocked === true,
+
+          ...(secretUnlocked
+            ? {
+                title: SECRET_ACHIEVEMENT.reward.title,
+                exclusiveFrame:
+                  SECRET_ACHIEVEMENT.reward.exclusiveFrame
+              }
+            : {}),
+
+          updatedAt: FieldValue.serverTimestamp()
+        }
+      );
+
+      if (unlocked > 0 || secretUnlocked) {
+        addPublicRankingWrites(
+          transaction,
+          uid,
+          player,
+          {
+            level: xpResult.level,
+            totalXp:
+              (player.totalXp || 0) +
+              (xpResult.awardedXp || 0),
+            achievementsCompleted: newCompleted
+          }
+        );
+      }
+
+      if (secretUnlocked) {
+        transaction.create(
+          secretRef,
+          {
+            achievementId: SECRET_ACHIEVEMENT.id,
+            title: SECRET_ACHIEVEMENT.title,
+            rarity: 'Secret',
+            reward: SECRET_ACHIEVEMENT.reward,
+            completedAt: FieldValue.serverTimestamp()
+          }
+        );
+      }
+
+      transaction.create(
+        receipt,
+        {
+          event: eventName,
+          eventId,
+          unlockedCount: unlocked,
+          createdAt: FieldValue.serverTimestamp()
+        }
       );
 
       return {
-        success: true,
-        ...result
+        duplicate: false,
+        unlocked,
+        secretUnlocked,
+        achievementsCompleted: newCompleted,
+        xpReward: xpResult.awardedXp || 0,
+        coinReward: actualCoins,
+        level: xpResult.level,
+        levelsGained: xpResult.levelsGained || 0
       };
-    });
+    }
+  );
+
+  if (result.duplicate) {
+    return result;
   }
-);
 
-// ------------------------------
-// ACTIVATE STORED XP BOOST
-// ------------------------------
-
-exports.activateXpBoost = onCall(
-  { region: REGION },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in first.");
-    }
-
-    const uid = request.auth.uid;
-    const boostId = request.data?.boostId;
-
-    if (typeof boostId !== "string" || !boostId) {
-      throw new HttpsError("invalid-argument", "Invalid boost ID.");
-    }
-
-    const playerRef = db.collection("players").doc(uid);
-    const boostRef = db
-      .collection("boosts")
-      .doc(uid)
-      .collection("items")
-      .doc(boostId);
-
-    return db.runTransaction(async (transaction) => {
-      const playerSnapshot = await transaction.get(playerRef);
-      const boostSnapshot = await transaction.get(boostRef);
-
-      if (!playerSnapshot.exists || !boostSnapshot.exists) {
-        throw new HttpsError("not-found", "Player or boost not found.");
+  if (
+    result.unlocked > 0 &&
+    eventName !== 'achievements_completed'
+  ) {
+    await awardAchievementEvent(
+      uid,
+      'achievements_completed',
+      {
+        eventId: `meta-${eventId}`,
+        amount: result.unlocked,
+        value: result.unlocked
       }
+    );
+  }
 
-      const player = playerSnapshot.data();
-      const boost = boostSnapshot.data();
+  if (
+    result.levelsGained > 0 &&
+    eventName !== 'player_level'
+  ) {
+    await awardAchievementEvent(
+      uid,
+      'player_level',
+      {
+        eventId: `level-${eventId}-${result.level}`,
+        amount: 1,
+        value: result.level
+      }
+    );
+  }
 
-      if (
-        boost.type !== "xp_boost" ||
-        boost.status !== "stored"
-      ) {
+  return result;
+}
+
+// ------------------------------------
+// PLAYER CREATION
+// ------------------------------------
+
+exports.createPlayerProfile =
+  functionsV1
+    .region(REGION)
+    .auth
+    .user()
+    .onCreate(async (user) => {
+      const uid = user.uid;
+
+      const displayName =
+        String(user.displayName || 'Player')
+          .trim()
+          .slice(0, 24) || 'Player';
+
+      const pRef = playerRef(uid);
+
+      await db.runTransaction(
+        async (transaction) => {
+          const existing =
+            await transaction.get(pRef);
+
+          if (existing.exists) {
+            return;
+          }
+
+          const player = {
+            uid,
+            displayName,
+            avatarId: 'default',
+
+            level: 1,
+            xp: 0,
+            totalXp: 0,
+            xpToNextLevel: 100,
+
+            coins: 0,
+            achievementsCompleted: 0,
+
+            attendanceStreak: 0,
+            lastAttendanceDay: null,
+
+            activeXpBoost: null,
+            activeCoinsBoost: null,
+
+            title: null,
+            exclusiveFrame: null,
+
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp()
+          };
+
+          transaction.create(pRef, player);
+
+          addPublicRankingWrites(
+            transaction,
+            uid,
+            player
+          );
+        }
+      );
+
+      await awardAchievementEvent(
+        uid,
+        'site_login',
+        {
+          eventId: `account-created-${uid}`,
+          amount: 1,
+          value: 1
+        }
+      );
+    });
+
+// ------------------------------------
+// UPDATE PLAYER PROFILE
+// ------------------------------------
+
+exports.updatePlayerProfile =
+  onCall({ region: REGION }, async (request) => {
+    const uid = requireAuth(request);
+
+    const displayName =
+      String(request.data?.displayName || '').trim();
+
+    const avatarId =
+      String(request.data?.avatarId || 'default').trim();
+
+    if (
+      displayName.length < 2 ||
+      displayName.length > 24
+    ) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Display name must be 2–24 characters.'
+      );
+    }
+
+    if (!/^(default|avatar_[0-9]{2})$/.test(avatarId)) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Invalid avatar ID.'
+      );
+    }
+
+    const pRef = playerRef(uid);
+
+    await db.runTransaction(
+      async (transaction) => {
+        const snapshot =
+          await transaction.get(pRef);
+
+        if (!snapshot.exists) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Player profile is missing.'
+          );
+        }
+
+        const player = snapshot.data();
+
+        transaction.update(
+          pRef,
+          {
+            displayName,
+            avatarId,
+            updatedAt: FieldValue.serverTimestamp()
+          }
+        );
+
+        addPublicRankingWrites(
+          transaction,
+          uid,
+          player,
+          { displayName, avatarId }
+        );
+      }
+    );
+
+    const suffix =
+      crypto.randomBytes(6).toString('hex');
+
+    await Promise.all([
+      awardAchievementEvent(
+        uid,
+        'display_name_set',
+        {
+          eventId: `name-${suffix}`,
+          amount: 1,
+          value: 1
+        }
+      ),
+
+      awardAchievementEvent(
+        uid,
+        'avatar_equipped',
+        {
+          eventId: `avatar-${suffix}`,
+          amount: 1,
+          value: 1
+        }
+      ),
+
+      awardAchievementEvent(
+        uid,
+        'profile_completed',
+        {
+          eventId: `profile-${suffix}`,
+          amount: 1,
+          value: 1
+        }
+      )
+    ]);
+
+    return {
+      success: true,
+      displayName,
+      avatarId
+    };
+  });
+
+// ------------------------------------
+// DAILY ATTENDANCE
+// 50 coins daily + 500 on every 7th day
+// ------------------------------------
+
+exports.dailyCheckIn =
+  onCall({ region: REGION }, async (request) => {
+    const uid = requireAuth(request);
+
+    const today = egyptDate();
+    const pRef = playerRef(uid);
+
+    const attendanceRef =
+      db.collection('attendance')
+        .doc(uid)
+        .collection('days')
+        .doc(today);
+
+    const transactionRef =
+      db.collection('transactions')
+        .doc(uid)
+        .collection('items')
+        .doc(`attendance-${today}`);
+
+    const result = await db.runTransaction(
+      async (transaction) => {
+        const [attendanceSnap, playerSnap] =
+          await Promise.all([
+            transaction.get(attendanceRef),
+            transaction.get(pRef)
+          ]);
+
+        if (!playerSnap.exists) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Player profile is missing.'
+          );
+        }
+
+        if (attendanceSnap.exists) {
+          const previous = attendanceSnap.data();
+
+          return {
+            success: true,
+            alreadyCheckedIn: true,
+            streak: previous.streak,
+            dailyReward: previous.dailyReward,
+            weeklyReward: previous.weeklyReward,
+            totalReward: previous.totalReward
+          };
+        }
+
+        const player = playerSnap.data();
+
+        const streak =
+          player.lastAttendanceDay &&
+          dayDifference(
+            player.lastAttendanceDay,
+            today
+          ) === 1
+            ? (player.attendanceStreak || 0) + 1
+            : 1;
+
+        const dailyReward = DAILY_COINS;
+
+        const weeklyReward =
+          streak % 7 === 0
+            ? WEEKLY_STREAK_BONUS
+            : 0;
+
+        const baseReward =
+          dailyReward + weeklyReward;
+
+        const totalReward =
+          grantCoinsInTransaction(
+            player,
+            baseReward
+          );
+
+        transaction.update(
+          pRef,
+          {
+            coins:
+              (player.coins || 0) + totalReward,
+
+            attendanceStreak: streak,
+            lastAttendanceDay: today,
+
+            updatedAt: FieldValue.serverTimestamp()
+          }
+        );
+
+        transaction.create(
+          attendanceRef,
+          {
+            uid,
+            date: today,
+            streak,
+            dailyReward,
+            weeklyReward,
+            totalReward,
+            createdAt: FieldValue.serverTimestamp()
+          }
+        );
+
+        transaction.create(
+          transactionRef,
+          {
+            type: 'attendance',
+            amount: totalReward,
+            dailyReward,
+            weeklyReward,
+            createdAt: FieldValue.serverTimestamp()
+          }
+        );
+
+        return {
+          success: true,
+          alreadyCheckedIn: false,
+          streak,
+          dailyReward,
+          weeklyReward,
+          totalReward
+        };
+      }
+    );
+
+    if (!result.alreadyCheckedIn) {
+      await Promise.all([
+        awardAchievementEvent(
+          uid,
+          'daily_checkin',
+          {
+            eventId: `checkin-${today}`,
+            amount: 1,
+            value: 1
+          }
+        ),
+
+        awardAchievementEvent(
+          uid,
+          'attendance_streak',
+          {
+            eventId: `streak-${today}`,
+            amount: 1,
+            value: result.streak
+          }
+        ),
+
+        awardAchievementEvent(
+          uid,
+          'coins_earned',
+          {
+            eventId: `attendance-coins-${today}`,
+            amount: result.totalReward,
+            value: result.totalReward
+          }
+        )
+      ]);
+    }
+
+    return result;
+  });
+
+// ------------------------------------
+// ADMIN: GRANT XP
+// ------------------------------------
+
+exports.adminGrantXp =
+  onCall({ region: REGION }, async (request) => {
+    const adminUid = requireAuth(request);
+
+    await verifyAdmin(adminUid);
+
+    const uid = String(request.data?.uid || '');
+
+    if (!/^[A-Za-z0-9_-]{10,128}$/.test(uid)) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Invalid player UID.'
+      );
+    }
+
+    const amount = safeInteger(
+      request.data?.amount,
+      1,
+      10000,
+      'XP amount'
+    );
+
+    const result = await db.runTransaction(
+      async (transaction) => {
+        const snapshot =
+          await transaction.get(playerRef(uid));
+
+        if (!snapshot.exists) {
+          throw new HttpsError(
+            'not-found',
+            'Player not found.'
+          );
+        }
+
+        return grantXpInTransaction(
+          transaction,
+          uid,
+          snapshot.data(),
+          amount
+        );
+      }
+    );
+
+    if (result.levelsGained > 0) {
+      await awardAchievementEvent(
+        uid,
+        'player_level',
+        {
+          eventId:
+            `admin-level-${crypto.randomBytes(8).toString('hex')}`,
+          amount: 1,
+          value: result.level
+        }
+      );
+    }
+
+    return {
+      success: true,
+      ...result
+    };
+  });
+
+// ------------------------------------
+// ACTIVATE STORED BOOSTS
+// ------------------------------------
+
+async function activateBoost(
+  uid,
+  boostId,
+  expectedType
+) {
+  if (
+    typeof boostId !== 'string' ||
+    !/^[A-Za-z0-9_-]{1,150}$/.test(boostId)
+  ) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Invalid boost ID.'
+    );
+  }
+
+  const pRef = playerRef(uid);
+  const itemRef = inventoryRef(uid).doc(boostId);
+
+  const result = await db.runTransaction(
+    async (transaction) => {
+      const [playerSnap, itemSnap] =
+        await Promise.all([
+          transaction.get(pRef),
+          transaction.get(itemRef)
+        ]);
+
+      if (!playerSnap.exists || !itemSnap.exists) {
         throw new HttpsError(
-          "failed-precondition",
-          "This boost is not available."
+          'not-found',
+          'Player or boost not found.'
         );
       }
 
-      const currentBoost = player.activeXpBoost;
+      const player = playerSnap.data();
+      const item = itemSnap.data();
+
+      if (
+        item.type !== expectedType ||
+        item.status !== 'stored'
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          'This boost is not available.'
+        );
+      }
+
+      const activeKey =
+        expectedType === 'xp_boost'
+          ? 'activeXpBoost'
+          : 'activeCoinsBoost';
+
+      if (activeBoost(player[activeKey])) {
+        throw new HttpsError(
+          'failed-precondition',
+          'A boost of this type is already active.'
+        );
+      }
+
+      const durationMinutes =
+        Number(
+          item.durationMinutes ||
+          Number(item.durationHours || 1) * 60
+        );
+
+      if (
+        !Number.isInteger(durationMinutes) ||
+        durationMinutes < 1 ||
+        durationMinutes > 1440
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Invalid boost duration.'
+        );
+      }
+
       const now = Date.now();
 
-      if (
-        currentBoost &&
-        currentBoost.expiresAt &&
-        currentBoost.expiresAt.toMillis() > now
-      ) {
-        throw new HttpsError(
-          "failed-precondition",
-          "An XP boost is already active."
-        );
-      }
+      const activatedAt =
+        Timestamp.fromMillis(now);
 
-      const expiresAt = Timestamp.fromMillis(
-        now + XP_BOOST_DURATION
+      const expiresAt =
+        Timestamp.fromMillis(
+          now + durationMinutes * 60000
+        );
+
+      transaction.update(
+        itemRef,
+        {
+          status: 'used',
+          activatedAt,
+          expiresAt
+        }
       );
 
-      transaction.update(boostRef, {
-        status: "used",
-        activatedAt: Timestamp.fromMillis(now),
-        expiresAt
-      });
-
-      transaction.update(playerRef, {
-        activeXpBoost: {
-          multiplier: 2,
-          activatedAt: Timestamp.fromMillis(now),
-          expiresAt
-        },
-        updatedAt: FieldValue.serverTimestamp()
-      });
+      transaction.update(
+        pRef,
+        {
+          [activeKey]: {
+            multiplier: 2,
+            activatedAt,
+            expiresAt
+          },
+          updatedAt: FieldValue.serverTimestamp()
+        }
+      );
 
       return {
         success: true,
+        type: expectedType,
         multiplier: 2,
-        durationMinutes: 60,
+        durationMinutes,
         expiresAt: expiresAt.toDate().toISOString()
       };
-    });
-  }
-);
-
-// ==========================================
-// I.M.G GAMING - SECURE REDEEM CODE SYSTEM
-// ==========================================
-
-const ALLOWED_COIN_REWARDS = [100, 250, 500, 1000, 2000, 5000];
-
-function hashRedeemCode(code) {
-  return createHash("sha256")
-    .update(code.trim().toUpperCase())
-    .digest("hex");
-}
-
-async function verifyAdmin(uid) {
-  const snapshot = await db.collection("admins").doc(uid).get();
-
-  if (!snapshot.exists || snapshot.data().active !== true) {
-    throw new HttpsError("permission-denied", "Admin access required.");
-  }
-}
-
-// ADMIN: CREATE A SINGLE-USE CODE
-exports.adminCreateRedeemCode = onCall(
-  { region: REGION },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in first.");
     }
+  );
 
-    await verifyAdmin(request.auth.uid);
-
-    const data = request.data || {};
-    const type = data.type;
-
-    if (!["coins", "xp_boost", "coins_boost"].includes(type)) {
-      throw new HttpsError("invalid-argument", "Invalid code type.");
-    }
-
-    let reward = {};
-
-    if (type === "coins") {
-      const amount = data.amount;
-
-      if (!ALLOWED_COIN_REWARDS.includes(amount)) {
-        throw new HttpsError("invalid-argument", "Invalid coin amount.");
+  if (expectedType === 'xp_boost') {
+    await awardAchievementEvent(
+      uid,
+      'xp_boost_activated',
+      {
+        eventId: `boost-${boostId}`,
+        amount: 1,
+        value: 1
       }
+    );
+  }
 
-      reward = { amount };
-    } else {
-      const durationHours = data.durationHours;
+  return result;
+}
 
-      if (
-        !Number.isInteger(durationHours) ||
-        durationHours < 1 ||
-        durationHours > 24
-      ) {
+exports.activateXpBoost =
+  onCall({ region: REGION }, async (request) => {
+    const uid = requireAuth(request);
+
+    return activateBoost(
+      uid,
+      request.data?.boostId,
+      'xp_boost'
+    );
+  });
+
+exports.activateCoinsBoost =
+  onCall({ region: REGION }, async (request) => {
+    const uid = requireAuth(request);
+
+    return activateBoost(
+      uid,
+      request.data?.boostId,
+      'coins_boost'
+    );
+  });
+
+// ------------------------------------
+// ADMIN: CREATE ONE-TIME REDEEM CODE
+// ------------------------------------
+
+exports.adminCreateRedeemCode =
+  onCall({ region: REGION }, async (request) => {
+    const adminUid = requireAuth(request);
+
+    await verifyAdmin(adminUid);
+
+    const type = request.data?.type;
+
+    if (
+      !['coins', 'xp_boost', 'coins_boost'].includes(type)
+    ) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Invalid code type.'
+      );
+    }
+
+    let reward;
+
+    if (type === 'coins') {
+      reward = {
+        amount: safeInteger(
+          request.data?.amount,
+          1,
+          5000,
+          'coin amount'
+        )
+      };
+
+      if (!ALLOWED_COIN_REWARDS.includes(reward.amount)) {
         throw new HttpsError(
-          "invalid-argument",
-          "Boost duration must be between 1 and 24 hours."
+          'invalid-argument',
+          'Unsupported coin amount.'
         );
       }
-
+    } else {
       reward = {
         multiplier: 2,
-        durationHours
+        durationHours: safeInteger(
+          request.data?.durationHours,
+          1,
+          24,
+          'boost duration'
+        )
       };
     }
 
     const code =
-      "IMG-" + randomBytes(5).toString("hex").toUpperCase();
+      `IMG-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
 
-    const codeHash = hashRedeemCode(code);
-    const codeRef = db.collection("redeemCodes").doc(codeHash);
+    const hash =
+      crypto.createHash('sha256')
+        .update(code)
+        .digest('hex');
 
-    await db.runTransaction(async (transaction) => {
-      transaction.create(codeRef, {
-        type,
-        ...reward,
-        used: false,
-        usedBy: null,
-        createdBy: request.auth.uid,
-        createdAt: FieldValue.serverTimestamp()
-      });
+    const codeRef =
+      db.collection('redeemCodes').doc(hash);
 
-      const logRef = db.collection("adminLogs").doc();
+    const logRef =
+      db.collection('adminLogs').doc();
 
-      transaction.set(logRef, {
-        adminUid: request.auth.uid,
-        action: "create_redeem_code",
-        codeType: type,
-        createdAt: FieldValue.serverTimestamp()
-      });
-    });
+    await db.runTransaction(
+      async (transaction) => {
+        transaction.create(
+          codeRef,
+          {
+            type,
+            ...reward,
+            used: false,
+            usedBy: null,
+            createdBy: adminUid,
+            createdAt: FieldValue.serverTimestamp()
+          }
+        );
 
-    // The plain code is returned only once.
+        transaction.create(
+          logRef,
+          {
+            adminUid,
+            action: 'create_redeem_code',
+            rewardType: type,
+            createdAt: FieldValue.serverTimestamp()
+          }
+        );
+      }
+    );
+
     return {
       success: true,
       code,
       type,
       ...reward
     };
-  }
-);
+  });
 
-// PLAYER: REDEEM A SINGLE-USE CODE
-exports.redeemStoreCode = onCall(
-  { region: REGION },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in first.");
-    }
+// ------------------------------------
+// PLAYER: REDEEM ONE-TIME CODE
+// ------------------------------------
 
-    const uid = request.auth.uid;
+exports.redeemStoreCode =
+  onCall({ region: REGION }, async (request) => {
+    const uid = requireAuth(request);
+
     const rawCode = request.data?.code;
 
     if (
-      typeof rawCode !== "string" ||
+      typeof rawCode !== 'string' ||
       rawCode.trim().length < 8 ||
       rawCode.trim().length > 40
     ) {
-      throw new HttpsError("invalid-argument", "Invalid code.");
+      throw new HttpsError(
+        'invalid-argument',
+        'Invalid code.'
+      );
     }
 
-    const codeHash = hashRedeemCode(rawCode);
-    const codeRef = db.collection("redeemCodes").doc(codeHash);
-    const playerRef = db.collection("players").doc(uid);
+    const normalizedCode =
+      rawCode.trim().toUpperCase();
 
-    const inventoryRef = db
-      .collection("inventory")
-      .doc(uid)
-      .collection("items")
-      .doc();
+    const hash =
+      crypto.createHash('sha256')
+        .update(normalizedCode)
+        .digest('hex');
 
-    const transactionRef = db
-      .collection("transactions")
-      .doc(uid)
-      .collection("items")
-      .doc();
+    const codeRef =
+      db.collection('redeemCodes').doc(hash);
 
-    return db.runTransaction(async (transaction) => {
-      const codeSnapshot = await transaction.get(codeRef);
-      const playerSnapshot = await transaction.get(playerRef);
+    const pRef = playerRef(uid);
 
-      if (!codeSnapshot.exists) {
-        throw new HttpsError("not-found", "Code not found.");
-      }
+    const transactionRef =
+      db.collection('transactions')
+        .doc(uid)
+        .collection('items')
+        .doc(`redeem-${hash}`);
 
-      if (!playerSnapshot.exists) {
-        throw new HttpsError("failed-precondition", "Player profile missing.");
-      }
+    const result = await db.runTransaction(
+      async (transaction) => {
+        const [codeSnap, playerSnap] =
+          await Promise.all([
+            transaction.get(codeRef),
+            transaction.get(pRef)
+          ]);
 
-      const codeData = codeSnapshot.data();
-
-      if (codeData.used === true) {
-        throw new HttpsError(
-          "already-exists",
-          "This code has already been redeemed."
-        );
-      }
-
-      const now = FieldValue.serverTimestamp();
-      const player = playerSnapshot.data();
-
-      if (codeData.type === "coins") {
-        const amount = codeData.amount;
-
-        if (!ALLOWED_COIN_REWARDS.includes(amount)) {
+        if (!codeSnap.exists) {
           throw new HttpsError(
-            "failed-precondition",
-            "Invalid reward configuration."
+            'not-found',
+            'Code not found.'
           );
         }
 
-        transaction.update(playerRef, {
-          coins: (player.coins || 0) + amount,
-          updatedAt: now
-        });
+        if (!playerSnap.exists) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Player profile is missing.'
+          );
+        }
 
-        transaction.set(transactionRef, {
-          type: "redeem_code",
-          amount,
-          createdAt: now
-        });
-      } else if (
-        codeData.type === "xp_boost" ||
-        codeData.type === "coins_boost"
-      ) {
-        const durationHours = codeData.durationHours;
+        const code = codeSnap.data();
 
-        if (
-          !Number.isInteger(durationHours) ||
-          durationHours < 1 ||
-          durationHours > 24 ||
-          codeData.multiplier !== 2
+        if (code.used) {
+          throw new HttpsError(
+            'already-exists',
+            'This code has already been redeemed.'
+          );
+        }
+
+        const player = playerSnap.data();
+
+        const now = FieldValue.serverTimestamp();
+
+        if (code.type === 'coins') {
+          if (!ALLOWED_COIN_REWARDS.includes(code.amount)) {
+            throw new HttpsError(
+              'failed-precondition',
+              'Invalid code reward.'
+            );
+          }
+
+          const actual =
+            grantCoinsInTransaction(
+              player,
+              code.amount
+            );
+
+          transaction.update(
+            pRef,
+            {
+              coins: (player.coins || 0) + actual,
+              updatedAt: now
+            }
+          );
+
+          transaction.create(
+            transactionRef,
+            {
+              type: 'redeem_code',
+              amount: actual,
+              createdAt: now
+            }
+          );
+        } else if (
+          code.type === 'xp_boost' ||
+          code.type === 'coins_boost'
         ) {
+          if (
+            code.multiplier !== 2 ||
+            !Number.isInteger(code.durationHours) ||
+            code.durationHours < 1 ||
+            code.durationHours > 24
+          ) {
+            throw new HttpsError(
+              'failed-precondition',
+              'Invalid boost code reward.'
+            );
+          }
+
+          const itemRef =
+            inventoryRef(uid).doc(`code-${hash}`);
+
+          transaction.create(
+            itemRef,
+            {
+              type: code.type,
+              multiplier: 2,
+              durationHours: code.durationHours,
+              durationMinutes: code.durationHours * 60,
+              status: 'stored',
+              source: 'redeem_code',
+              createdAt: now
+            }
+          );
+
+          transaction.create(
+            transactionRef,
+            {
+              type: 'redeem_code',
+              rewardType: code.type,
+              durationHours: code.durationHours,
+              createdAt: now
+            }
+          );
+        } else {
           throw new HttpsError(
-            "failed-precondition",
-            "Invalid boost configuration."
+            'failed-precondition',
+            'Unsupported code reward.'
           );
         }
 
-        transaction.set(inventoryRef, {
-          type: codeData.type,
-          multiplier: 2,
-          durationHours,
-          durationMinutes: durationHours * 60,
-          status: "stored",
-          source: "redeem_code",
-          createdAt: now
-        });
-
-        transaction.set(transactionRef, {
-          type: "redeem_code",
-          rewardType: codeData.type,
-          durationHours,
-          createdAt: now
-        });
-      } else {
-        throw new HttpsError(
-          "failed-precondition",
-          "Unsupported code reward."
+        transaction.update(
+          codeRef,
+          {
+            used: true,
+            usedBy: uid,
+            usedAt: now
+          }
         );
+
+        return {
+          success: true,
+          rewardType: code.type,
+          amount:
+            code.type === 'coins'
+              ? code.amount
+              : null
+        };
       }
+    );
 
-      transaction.update(codeRef, {
-        used: true,
-        usedBy: uid,
-        usedAt: now
-      });
+    if (result.rewardType === 'coins') {
+      await awardAchievementEvent(
+        uid,
+        'coins_earned',
+        {
+          eventId: `redeem-coins-${hash}`,
+          amount: result.amount,
+          value: result.amount
+        }
+      );
+    }
 
-      return {
-        success: true,
-        rewardType: codeData.type,
-        amount: codeData.type === "coins" ? codeData.amount : null,
-        message: "Code redeemed successfully."
-      };
-    });
-  }
-);
+    return result;
+  });
+
+// ------------------------------------
+// GET ACHIEVEMENT CATALOG
+// ------------------------------------
+
+exports.getAchievementCatalog =
+  onCall({ region: REGION }, async (request) => {
+    requireAuth(request);
+
+    return {
+      schemaVersion: catalog.schemaVersion,
+      baseAchievementCount: catalog.baseAchievementCount,
+      secretAchievementCount: catalog.secretAchievementCount,
+      rarityDistribution: catalog.rarityDistribution,
+
+      achievements: BASE_ACHIEVEMENTS.map((a) => ({
+        id: a.id,
+        title: a.title,
+        description: a.description,
+        category: a.category,
+        rarity: a.rarity,
+        scope: a.scope,
+        condition: a.condition,
+        reward: a.reward,
+        status: a.status
+      }))
+    };
+  });
