@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ROBOT: LAST QUETA</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: rgba(10, 16, 30, 0.9);
+      --panel-border: #7dd3fc;
+      --accent: #22d3ee;
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --success: #4ade80;
+      --text: #ebf8ff;
+      --muted: #9fb7d0;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top, #0f172a, #020617 60%);
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #game-shell {
+      position: relative;
+      width: min(100vw, 1100px);
+      height: min(100vh, 700px);
+      background: #030712;
+      border: 2px solid rgba(125, 211, 252, 0.4);
+      box-shadow: 0 0 30px rgba(34, 211, 238, 0.25);
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #020617;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.82);
+      backdrop-filter: blur(4px);
+      z-index: 10;
+      padding: 24px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .panel {
+      width: min(92%, 760px);
+      background: rgba(15, 23, 42, 0.92);
+      border: 2px solid rgba(125, 211, 252, 0.7);
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(14, 116, 144, 0.35);
+      padding: 26px 20px 18px;
+      text-align: center;
+    }
+
+    .title {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 3vw, 4rem);
+      line-height: 1;
+      letter-spacing: 0.08em;
+      font-weight: 900;
+      color: #f8fbff;
+      text-shadow: 0 0 18px rgba(34, 211, 238, 0.6);
+    }
+
+    .subtitle {
+      margin: 0 0 18px;
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 2px solid #020617;
+      background: linear-gradient(180deg, #0ea5e9, #0369a1);
+      color: white;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 12px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #020617;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    button:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #020617;
+    }
+
+    .secondary {
+      background: linear-gradient(180deg, #475569, #334155);
+    }
+
+    .danger {
+      background: linear-gradient(180deg, #ef4444, #b91c1c);
+    }
+
+    .success {
+      background: linear-gradient(180deg, #22c55e, #15803d);
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+      text-align: left;
+    }
+
+    .setting {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      border-radius: 12px;
+      padding: 12px 12px 10px;
+    }
+
+    .setting label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text);
+      font-weight: 700;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+
+    .setting output {
+      color: var(--warning);
+      font-size: 0.92rem;
+      min-width: 40px;
+      text-align: right;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .multiplayer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(150px, 1fr));
+      gap: 12px;
+      margin: 18px auto 12px;
+      max-width: 420px;
+    }
+
+    .slot {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      border-radius: 12px;
+      padding: 10px 8px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .slot.ready {
+      border-color: rgba(74, 222, 128, 0.9);
+      color: #b7f7d3;
+      box-shadow: inset 0 0 12px rgba(74, 222, 128, 0.18);
+    }
+
+    #hud {
+      position: absolute;
+      inset: 0 0 auto 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 14px;
+      pointer-events: none;
+      z-index: 6;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .hud-box {
+      background: rgba(2, 6, 23, 0.8);
+      border: 1px solid rgba(125, 211, 252, 0.6);
+      border-radius: 12px;
+      padding: 8px 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: #e2f5ff;
+    }
+
+    .hud-box .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+    }
+
+    .hud-box .danger {
+      background: var(--danger);
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.7);
+    }
+
+    #message {
+      position: absolute;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      background: rgba(2, 6, 23, 0.76);
+      border: 1px solid rgba(250, 204, 21, 0.7);
+      color: #fef3c7;
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-weight: 700;
+      z-index: 6;
+      min-width: min(90%, 420px);
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    #message.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-shell">
+    <canvas id="gameCanvas" width="1100" height="700"></canvas>
+
+    <div id="hud" class="hidden">
+      <div class="hud-box">Robot <span class="dot"></span> HP <span id="hpValue">100</span>%</div>
+      <div class="hud-box">Cores <span id="coreValue">0 / 3</span></div>
+      <div class="hud-box">Objective <span id="objectiveValue">Collect cores</span></div>
+    </div>
+
+    <div id="message">MISSION START</div>
+
+    <div id="menu-screen" class="screen">
+      <div class="panel">
+        <h1 class="title">ROBOT: LAST QUETA</h1>
+        <p class="subtitle">A horror robot quest where you must survive the dark and reach the Queta gate.</p>
+
+        <div class="button-row">
+          <button id="singleBtn" class="success">Single Player</button>
+          <button id="multiBtn">Multiplayer</button>
+          <button id="settingsBtn" class="secondary">Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settings-screen" class="screen hidden">
+      <div class="panel">
+        <h2 class="title" style="font-size: clamp(1.8rem, 2vw, 2.7rem);">Settings</h2>
+
+        <div class="settings-grid">
+          <div class="setting">
+            <label for="masterVolume">Master Volume <output id="masterVolumeOut">70%</output></label>
+            <input id="masterVolume" type="range" min="0" max="100" value="70" />
+          </div>
+
+          <div class="setting">
+            <label for="musicVolume">Music Volume <output id="musicVolumeOut">50%</output></label>
+            <input id="musicVolume" type="range" min="0" max="100" value="50" />
+          </div>
+
+          <div class="setting">
+            <label for="sfxVolume">SFX Volume <output id="sfxVolumeOut">90%</output></label>
+            <input id="sfxVolume" type="range" min="0" max="100" value="90" />
+          </div>
+
+          <div class="setting">
+            <label for="friendVolume">Friends Volume <output id="friendVolumeOut">60%</output></label>
+            <input id="friendVolume" type="range" min="0" max="100" value="60" />
+          </div>
+
+          <div class="setting">
+            <label for="sensitivity">Sensitivity <output id="sensitivityOut">80%</output></label>
+            <input id="sensitivity" type="range" min="20" max="140" value="80" />
+          </div>
+        </div>
+
+        <div class="button-row" style="margin-top: 22px;">
+          <button id="saveSettingsBtn">Save</button>
+          <button id="backFromSettingsBtn" class="secondary">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="multiplayer-screen" class="screen hidden">
+      <div class="panel">
+        <h2 class="title" style="font-size: clamp(1.8rem, 2vw, 2.7rem);">Multiplayer Lobby</h2>
+        <p class="subtitle">Enter the dark tunnel with your squad.</p>
+
+        <div class="multiplayer-grid" id="lobbySlots"></div>
+
+        <div class="button-row">
+          <button id="startMultiBtn" class="success">Start Match</button>
+          <button id="backFromMultiBtn" class="secondary">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const messageBox = document.getElementById('message');
+    const ui = {
+      hp: document.getElementById('hpValue'),
+      cores: document.getElementById('coreValue'),
+      objective: document.getElementById('objectiveValue'),
+      hud: document.getElementById('hud'),
+      menu: document.getElementById('menu-screen'),
+      settings: document.getElementById('settings-screen'),
+      multi: document.getElementById('multiplayer-screen'),
+      lobby: document.getElementById('lobbySlots')
+    };
+
+    const settingsDefault = {
+      master: 70,
+      music: 50,
+      sfx: 90,
+      friend: 60,
+      sensitivity: 80
+    };
+
+    let settings = loadSettings();
+    let audioCtx = null;
+    let masterGain = null;
+    let musicGain = null;
+    let sfxGain = null;
+    let musicOsc = null;
+    let audioStarted = false;
+
+    const WORLD = {
+      width: 1400,
+      height: 900,
+      tile: 60,
+      obstacles: [
+        { x: 200, y: 140, w: 220, h: 60 },
+        { x: 520, y: 120, w: 80, h: 260 },
+        { x: 800, y: 90, w: 120, h: 150 },
+        { x: 660, y: 420, w: 220, h: 70 },
+        { x: 220, y: 500, w: 180, h: 110 },
+        { x: 980, y: 300, w: 180, h: 120 },
+        { x: 310, y: 300, w: 140, h: 90 },
+        { x: 1090, y: 540, w: 120, h: 120 }
+      ]
+    };
+
+    const player = {
+      x: 120,
+      y: 170,
+      radius: 18,
+      speed: 220,
+      hp: 100,
+      maxHp: 100,
+      angle: 0,
+      cores: 0,
+      weaponCooldown: 0,
+      immune: 0,
+      alive: true,
+      mode: 'single'
+    };
+
+    let keys = {};
+    let pointer = { x: canvas.width / 2, y: canvas.height / 2 };
+    let camera = { x: 0, y: 0 };
+    let running = false;
+    let mode = 'single';
+    let allCores = [];
+    let monsters = [];
+    let friendBots = [];
+    let portal = { x: 1240, y: 760, r: 28 };
+    let flashAlpha = 0;
+    let levelTimer = 0;
+    let missionText = 'Collect 3 cores';
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function loadSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('robot_horror_settings'));
+        return { ...settingsDefault, ...saved };
+      } catch {
+        return { ...settingsDefault };
+      }
+    }
+
+    function saveSettings() {
+      localStorage.setItem('robot_horror_settings', JSON.stringify(settings));
+    }
+
+    function updateSettingLabels() {
+      document.getElementById('masterVolumeOut').textContent = `${settings.master}%`;
+      document.getElementById('musicVolumeOut').textContent = `${settings.music}%`;
+      document.getElementById('sfxVolumeOut').textContent = `${settings.sfx}%`;
+      document.getElementById('friendVolumeOut').textContent = `${settings.friend}%`;
+      document.getElementById('sensitivityOut').textContent = `${settings.sensitivity}%`;
+    }
+
+    function bindSettingInputs() {
+      const ids = ['masterVolume', 'musicVolume', 'sfxVolume', 'friendVolume', 'sensitivity'];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        const key = id.replace('Volume', '').replace('sensitivity', 'sensitivity');
+        let settingKey = 'master';
+        if (id === 'musicVolume') settingKey = 'music';
+        if (id === 'sfxVolume') settingKey = 'sfx';
+        if (id === 'friendVolume') settingKey = 'friend';
+        if (id === 'sensitivity') settingKey = 'sensitivity';
+
+        el.value = settings[settingKey];
+        el.addEventListener('input', () => {
+          settings[settingKey] = Number(el.value);
+          updateSettingLabels();
+        });
+      });
+      updateSettingLabels();
+    }
+
+    function ensureAudio() {
+      if (audioStarted) return;
+      audioStarted = true;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      musicGain = audioCtx.createGain();
+      sfxGain = audioCtx.createGain();
+
+      masterGain.gain.value = settings.master / 100;
+      musicGain.gain.value = settings.music / 100;
+      sfxGain.gain.value = settings.sfx / 100;
+
+      masterGain.connect(audioCtx.destination);
+      musicGain.connect(masterGain);
+      sfxGain.connect(masterGain);
+
+      startMusicLoop();
+    }
+
+    function startMusicLoop() {
+      if (!audioCtx || musicOsc) return;
+      musicOsc = audioCtx.createOscillator();
+      const musicGainNode = audioCtx.createGain();
+      musicOsc.type = 'sawtooth';
+      musicOsc.frequency.value = 62;
+      musicGainNode.gain.value = 0.015;
+      musicOsc.connect(musicGainNode);
+      musicGainNode.connect(musicGain);
+      musicOsc.start();
+    }
+
+    function updateAudioMix() {
+      if (!masterGain || !musicGain || !sfxGain) return;
+      masterGain.gain.value = settings.master / 100;
+      musicGain.gain.value = settings.music / 100;
+      sfxGain.gain.value = settings.sfx / 100;
+    }
+
+    function playTone(freq, duration = 0.12, type = 'sine', gain = 0.04) {
+      if (!audioCtx || !sfxGain) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      g.gain.value = gain;
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function showMessage(text, time = 1700) {
+      messageBox.textContent = text;
+      messageBox.classList.add('visible');
+      clearTimeout(showMessage.timeoutId);
+      showMessage.timeoutId = setTimeout(() => messageBox.classList.remove('visible'), time);
+    }
+
+    function createCore(x, y) {
+      return { x, y, r: 12, collected: false };
+    }
+
+    function createMonster(x, y, hue = 0) {
+      return {
+        x, y,
+        r: 16,
+        speed: 80 + Math.random() * 30,
+        phase: Math.random() * Math.PI * 2,
+        hue,
+        attackCooldown: 0,
+        patrol: { x, y }
+      };
+    }
+
+    function resetGameState() {
+      player.x = 120;
+      player.y = 170;
+      player.hp = 100;
+      player.cores = 0;
+      player.alive = true;
+      player.weaponCooldown = 0;
+      player.immune = 0;
+      portal.x = 1240;
+      portal.y = 760;
+      flashAlpha = 0;
+      levelTimer = 0;
+      allCores = [
+        createCore(260, 700),
+        createCore(880, 180),
+        createCore(1180, 480)
+      ];
+
+      monsters = [
+        createMonster(560, 250, 8),
+        createMonster(760, 620, 20),
+        createMonster(1030, 260, 10),
+        createMonster(420, 760, 18)
+      ];
+
+      friendBots = mode === 'multi' ? [
+        { name: 'Mate A', x: 180, y: 240, color: '#60a5fa', active: true },
+        { name: 'Mate B', x: 260, y: 330, color: '#4ade80', active: true },
+        { name: 'Mate C', x: 210, y: 430, color: '#fbbf24', active: true }
+      ] : [];
+
+      missionText = 'Collect the 3 soul cores';
+      ui.objective.textContent = missionText;
+      updateHud();
+    }
+
+    function updateHud() {
+      ui.hp.textContent = Math.max(0, Math.round(player.hp));
+      ui.cores.textContent = `${player.cores} / 3`;
+      ui.objective.textContent = missionText;
+    }
+
+    function showScreen(name) {
+      const screens = ['menu-screen', 'settings-screen', 'multiplayer-screen'];
+      screens.forEach((id) => {
+        const el = document.getElementById(id);
+        el.classList.toggle('hidden', id !== name && id !== 'menu-screen' ? true : false);
+      });
+
+      if (name === 'menu-screen') {
+        document.getElementById('menu-screen').classList.remove('hidden');
+        document.getElementById('settings-screen').classList.add('hidden');
+        document.getElementById('multiplayer-screen').classList.add('hidden');
+      }
+      if (name === 'settings-screen') {
+        document.getElementById('settings-screen').classList.remove('hidden');
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('multiplayer-screen').classList.add('hidden');
+      }
+      if (name === 'multiplayer-screen') {
+        document.getElementById('multiplayer-screen').classList.remove('hidden');
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('settings-screen').classList.add('hidden');
+      }
+    }
+
+    function showLobbySlots() {
+      ui.lobby.innerHTML = '';
+      const slots = ['YOU', 'Mate A', 'Mate B', 'Mate C'];
+      slots.forEach((slotName) => {
+        const div = document.createElement('div');
+        div.className = 'slot ready';
+        div.textContent = slotName;
+        ui.lobby.appendChild(div);
+      });
+    }
+
+    function startSingleGame() {
+      ensureAudio();
+      updateAudioMix();
+      mode = 'single';
+      running = true;
+      document.getElementById('menu-screen').classList.add('hidden');
+      ui.hud.classList.remove('hidden');
+      resetGameState();
+      showMessage('Mission: Find the lost cores and reach the Queta gate', 2200);
+      playTone(140, 0.16, 'triangle', 0.05);
+      setObjective('Collect the 3 soul cores');
+    }
+
+    function startMultiGame() {
+      ensureAudio();
+      updateAudioMix();
+      mode = 'multi';
+      running = true;
+      document.getElementById('multiplayer-screen').classList.add('hidden');
+      ui.hud.classList.remove('hidden');
+      resetGameState();
+      showMessage('Squad mode online. Protect the robot and reach the gate.', 2400);
+      playTone(220, 0.18, 'triangle', 0.05);
+      setObjective('Collect the 3 soul cores with the squad');
+    }
+
+    function setObjective(text) {
+      missionText = text;
+      ui.objective.textContent = missionText;
+    }
+
+    function updateGame(dt) {
+      if (!running) return;
+      levelTimer += dt;
+      const moveX = (keys['d'] || keys['arrowright'] ? 1 : 0) - (keys['a'] || keys['arrowleft'] ? 1 : 0);
+      const moveY = (keys['s'] || keys['arrowdown'] ? 1 : 0) - (keys['w'] || keys['arrowup'] ? 1 : 0);
+      let dx = moveX;
+      let dy = moveY;
+      const dist = Math.hypot(dx, dy) || 1;
+      dx /= dist;
+      dy /= dist;
+
+      const sens = settings.sensitivity / 100;
+      player.angle = Math.atan2(pointer.y - canvas.height / 2, pointer.x - canvas.width / 2) + Math.PI / 2;
+      player.angle += (Math.random() - 0.5) * 0.004 * sens;
+
+      const nextX = player.x + dx * player.speed * dt * (0.9 + sens * 0.2);
+      const nextY = player.y + dy * player.speed * dt * (0.9 + sens * 0.2);
+
+      if (!isColliding(nextX, player.y, player.radius)) player.x = nextX;
+      if (!isColliding(player.x, nextY, player.radius)) player.y = nextY;
+
+      player.x = clamp(player.x, player.radius + 10, WORLD.width - player.radius - 10);
+      player.y = clamp(player.y, player.radius + 10, WORLD.height - player.radius - 10);
+
+      if (player.weaponCooldown > 0) player.weaponCooldown -= dt;
+      if (player.immune > 0) player.immune -= dt;
+
+      // Collect cores
+      allCores.forEach((core) => {
+        if (!core.collected && Math.hypot(player.x - core.x, player.y - core.y) < 28) {
+          core.collected = true;
+          player.cores += 1;
+          playTone(380, 0.16, 'square', 0.06);
+          showMessage('Core recovered', 900);
+          updateHud();
+        }
+      });
+
+      if (player.cores >= 3) {
+        const distPortal = Math.hypot(player.x - portal.x, player.y - portal.y);
+        if (distPortal < 40) {
+          running = false;
+          ui.hud.classList.add('hidden');
+          showMessage('The Queta is yours. You survived.', 3000);
+          setTimeout(() => {
+            document.getElementById('menu-screen').classList.remove('hidden');
+          }, 1500);
+          return;
+        }
+        setObjective('Reach the Queta gate');
+      } else {
+        setObjective('Collect the 3 soul cores');
+      }
+
+      monsters.forEach((monster) => {
+        const mdx = player.x - monster.x;
+        const mdy = player.y - monster.y;
+        const dist = Math.hypot(mdx, mdy) || 1;
+
+        if (dist < 180) {
+          monster.x += (mdx / dist) * monster.speed * dt;
+          monster.y += (mdy / dist) * monster.speed * dt;
+          monster.x = clamp(monster.x, 18, WORLD.width - 18);
+          monster.y = clamp(monster.y, 18, WORLD.height - 18);
+        } else {
+          monster.x += Math.sin(levelTimer * 0.8 + monster.phase) * 0.6;
+          monster.y += Math.cos(levelTimer * 0.9 + monster.phase) * 0.6;
+        }
+
+        monster.attackCooldown -= dt;
+        if (dist < 26 && monster.attackCooldown <= 0) {
+          monster.attackCooldown = 0.9;
+          if (player.immune <= 0) {
+            player.hp -= 12;
+            player.immune = 0.7;
+            flashAlpha = 1;
+            playTone(90, 0.12, 'sawtooth', 0.08);
+            if (player.hp <= 0) {
+              player.hp = 0;
+              running = false;
+              ui.hud.classList.add('hidden');
+              showMessage('The robot collapsed. Restarting the mission...', 2200);
+              setTimeout(() => {
+                document.getElementById('menu-screen').classList.remove('hidden');
+              }, 1600);
+              return;
+            }
+          }
+        }
+      });
+
+      if (player.immune > 0) {
+        flashAlpha = Math.max(0, flashAlpha - dt * 2.5);
+      }
+
+      if (mode === 'multi' && friendBots.length) {
+        friendBots.forEach((bot) => {
+          const dx = player.x - bot.x;
+          const dy = player.y - bot.y;
+          const distB = Math.hypot(dx, dy) || 1;
+          if (distB > 120) {
+            bot.x += (dx / distB) * 55 * dt;
+            bot.y += (dy / distB) * 55 * dt;
+          }
+        });
+      }
+
+      if (player.hp < 25) {
+        showMessage('Critical system failure! Move away from the shadows!', 1000);
+      }
+
+      updateHud();
+    }
+
+    function isInsideRect(x, y, rx, ry, rw, rh) {
+      return x > rx && x < rx + rw && y > ry && y < ry + rh;
+    }
+
+    function isColliding(x, y, r) {
+      const corners = [
+        [x - r, y - r],
+        [x + r, y - r],
+        [x - r, y + r],
+        [x + r, y + r]
+      ];
+      return corners.some(([px, py]) => {
+        if (px < 0 || py < 0 || px > WORLD.width || py > WORLD.height) return true;
+        return WORLD.obstacles.some((obs) => isInsideRect(px, py, obs.x, obs.y, obs.w, obs.h)) ||
+          WORLD.obstacles.some((obs) => isInsideRect(px, py, obs.x, obs.y, obs.w, obs.h));
+      });
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#020617');
+      gradient.addColorStop(1, '#101828');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Fog
+      for (let i = 0; i < 20; i++) {
+        const x = ((i * 173 + levelTimer * 7) % (canvas.width + 150)) - 80;
+        const y = ((i * 113 + levelTimer * 11) % (canvas.height + 150)) - 80;
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.06)';
+        ctx.fillRect(x, y, 180, 120);
+      }
+    }
+
+    function worldToScreen(x, y) {
+      const offsetX = canvas.width / 2 - player.x;
+      const offsetY = canvas.height / 2 - player.y;
+      return { x: x + offsetX, y: y + offsetY };
+    }
+
+    function drawMap() {
+      const offsetX = canvas.width / 2 - player.x;
+      const offsetY = canvas.height / 2 - player.y;
+
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < WORLD.width; x += WORLD.tile) {
+        for (let y = 0; y < WORLD.height; y += WORLD.tile) {
+          ctx.strokeRect(x + offsetX, y + offsetY, WORLD.tile, WORLD.tile);
+        }
+      }
+
+      WORLD.obstacles.forEach((obs) => {
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(obs.x + offsetX, obs.y + offsetY, obs.w, obs.h);
+        ctx.strokeStyle = '#475569';
+        ctx.strokeRect(obs.x + offsetX, obs.y + offsetY, obs.w, obs.h);
+      });
+
+      allCores.forEach((core) => {
+        if (core.collected) return;
+        const p = worldToScreen(core.x, core.y);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(levelTimer * 2.8);
+        ctx.fillStyle = '#a78bfa';
+        ctx.fillRect(-8, -8, 16, 16);
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(-3, -3, 6, 6);
+        ctx.restore();
+      });
+
+      const gate = worldToScreen(portal.x, portal.y);
+      ctx.beginPath();
+      ctx.fillStyle = player.cores >= 3 ? '#34d399' : '#475569';
+      ctx.arc(gate.x, gate.y, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+      ctx.lineWidth = 3;
+      ctx.arc(gate.x, gate.y, 32, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawRobot(px, py, color, size = 18) {
+      const p = worldToScreen(px, py);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(player.angle);
+      ctx.fillStyle = color;
+      ctx.fillRect(-size, -size, size * 2, size * 2);
+      ctx.fillStyle = '#dbeafe';
+      ctx.fillRect(-size * 0.5, -size * 0.4, size * 0.3, size * 0.3);
+      ctx.fillRect(size * 0.2, -size * 0.4, size * 0.3, size * 0.3);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-size * 0.7, size * 0.5, size * 1.4, 4);
+      ctx.restore();
+    }
+
+    function drawMonster(monster) {
+      const p = worldToScreen(monster.x, monster.y);
+      const glow = 18 + Math.sin(levelTimer * 8 + monster.phase) * 6;
+      ctx.beginPath();
+      ctx.fillStyle = `hsla(${monster.hue}, 90%, 55%, 0.8)`;
+      ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.arc(p.x, p.y, glow, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(p.x - 8, p.y - 8, 16, 16);
+    }
+
+    function drawFriends() {
+      friendBots.forEach((bot) => {
+        const p = worldToScreen(bot.x, bot.y);
+        ctx.fillStyle = bot.color;
+        ctx.fillRect(p.x - 12, p.y - 12, 24, 24);
+        ctx.fillStyle = '#e2f5ff';
+        ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
+      });
+    }
+
+    function drawStatusEffects() {
+      if (flashAlpha > 0) {
+        ctx.fillStyle = `rgba(248, 113, 113, ${flashAlpha * 0.6})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function render() {
+      drawBackground();
+      drawMap();
+      drawFriends();
+      monsters.forEach(drawMonster);
+      drawRobot(player.x, player.y, '#7dd3fc', 18);
+      drawStatusEffects();
+
+      const gateText = player.cores >= 3 ? 'QUETA GATE OPEN' : 'QUETA GATE LOCKED';
+      drawScreenText(gateText, portal.x, portal.y - 40);
+    }
+
+    function drawScreenText(text, worldX, worldY) {
+      const p = worldToScreen(worldX, worldY);
+      ctx.fillStyle = '#e0f2fe';
+      ctx.font = 'bold 14px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, p.x, p.y);
+    }
+
+    function handlePointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = (event.clientX - rect.left) / rect.width * canvas.width;
+      pointer.y = (event.clientY - rect.top) / rect.height * canvas.height;
+    }
+
+    function handleKeyState(event, isDown) {
+      const key = event.key.toLowerCase();
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key) || key === 'arrowleft' || key === 'arrowright') {
+        keys[key] = isDown;
+      }
+      if (event.key === 'e') {
+        if (isDown) {
+          if (player.cores >= 3 && Math.hypot(player.x - portal.x, player.y - portal.y) < 55) {
+            running = false;
+            showMessage('Queta reached. Mission completed.', 2600);
+            setTimeout(() => {
+              document.getElementById('menu-screen').classList.remove('hidden');
+            }, 1500);
+          }
+        }
+      }
+    }
+
+    document.getElementById('singleBtn').addEventListener('click', startSingleGame);
+    document.getElementById('multiBtn').addEventListener('click', () => {
+      showLobbySlots();
+      showScreen('multiplayer-screen');
+    });
+    document.getElementById('settingsBtn').addEventListener('click', () => showScreen('settings-screen'));
+    document.getElementById('backFromSettingsBtn').addEventListener('click', () => showScreen('menu-screen'));
+    document.getElementById('backFromMultiBtn').addEventListener('click', () => showScreen('menu-screen'));
+    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+      saveSettings();
+      updateAudioMix();
+      showScreen('menu-screen');
+      showMessage('Settings saved', 1200);
+    });
+    document.getElementById('startMultiBtn').addEventListener('click', startMultiGame);
+
+    document.addEventListener('keydown', (event) => handleKeyState(event, true));
+    document.addEventListener('keyup', (event) => handleKeyState(event, false));
+    canvas.addEventListener('mousemove', handlePointer);
+    canvas.addEventListener('click', () => ensureAudio());
+    window.addEventListener('resize', () => {
+      canvas.width = canvas.clientWidth * window.devicePixelRatio;
+      canvas.height = canvas.clientHeight * window.devicePixelRatio;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    });
+
+    bindSettingInputs();
+    showScreen('menu-screen');
+    showLobbySlots();
+    resetGameState();
+    updateHud();
+
+    let last = 0;
+    function loop(timestamp) {
+      const dt = Math.min(0.033, (timestamp - last) / 1000 || 0.016);
+      last = timestamp;
+
+      if (running) {
+        updateGame(dt);
+      }
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
