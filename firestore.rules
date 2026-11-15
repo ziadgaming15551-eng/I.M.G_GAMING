@@ -2,6 +2,115 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isActiveAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+
+    // Private player data: the owner can read; all writes go through Functions.
+    match /players/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Public profile cards and leaderboard entries are readable by everyone.
+    match /publicProfiles/{uid} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /leaderboards/{boardId}/entries/{uid} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Player achievements and progress.
+    match /playerAchievements/{uid}/items/{itemId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /achievementProgress/{uid}/items/{itemId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Inventory and legacy boost collection.
+    match /inventory/{uid}/items/{itemId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /boosts/{uid}/items/{itemId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Attendance and transaction history are private.
+    match /attendance/{uid}/days/{dayId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /transactions/{uid}/items/{transactionId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Friends and requests are readable by the participating account only.
+    match /friendRequests/{requestId} {
+      allow read: if signedIn()
+        && (resource.data.senderUid == request.auth.uid
+          || resource.data.recipientUid == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /friends/{uid}/{document=**} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /notifications/{uid}/items/{notificationId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Public read-only catalogs if/when these collections are populated.
+    match /gameCatalog/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /storeCatalog/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Administrative logs are visible only to an active admin.
+    match /adminLogs/{logId} {
+      allow read: if isActiveAdmin();
+      allow write: if false;
+    }
+
+    // All other collections (including admins, redeemCodes, and event receipts)
+    // remain inaccessible from client SDKs.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
     match /{document=**} {
       allow read, write: if false;
     }
