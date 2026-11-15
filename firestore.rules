@@ -16,13 +16,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
     }
 
-    // Private player data: the owner can read; all writes go through Functions.
+    // Private player account data. All client writes are blocked.
     match /players/{uid} {
       allow read: if isOwner(uid);
       allow write: if false;
     }
 
-    // Public profile cards and leaderboard entries are readable by everyone.
+    // Public, non-sensitive profile and leaderboard information.
     match /publicProfiles/{uid} {
       allow read: if true;
       allow write: if false;
@@ -33,7 +33,7 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Player achievements and progress.
+    // Private achievements and progress.
     match /playerAchievements/{uid}/items/{itemId} {
       allow read: if isOwner(uid);
       allow write: if false;
@@ -44,7 +44,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Inventory and legacy boost collection.
+    match /achievementReceipts/{uid}/items/{eventId} {
+      allow read, write: if false;
+    }
+
+    // Inventory and legacy milestone boosts.
     match /inventory/{uid}/items/{itemId} {
       allow read: if isOwner(uid);
       allow write: if false;
@@ -55,7 +59,7 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Attendance and transaction history are private.
+    // Attendance and transaction history.
     match /attendance/{uid}/days/{dayId} {
       allow read: if isOwner(uid);
       allow write: if false;
@@ -66,7 +70,7 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Friends and requests are readable by the participating account only.
+    // Friend requests can only be read by either participant.
     match /friendRequests/{requestId} {
       allow read: if signedIn()
         && (resource.data.senderUid == request.auth.uid
@@ -79,12 +83,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Private notification inbox.
     match /notifications/{uid}/items/{notificationId} {
       allow read: if isOwner(uid);
       allow write: if false;
     }
 
-    // Public read-only catalogs if/when these collections are populated.
+    // Read-only public catalogs.
     match /gameCatalog/{document=**} {
       allow read: if true;
       allow write: if false;
@@ -95,22 +100,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Administrative logs are visible only to an active admin.
+    // Only active admins can read admin audit logs.
     match /adminLogs/{logId} {
       allow read: if isActiveAdmin();
       allow write: if false;
     }
 
-    // All other collections (including admins, redeemCodes, and event receipts)
-    // remain inaccessible from client SDKs.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
+    // Admin records, redeem codes, Game Pass data, and all unknown paths
+    // are intentionally inaccessible from client SDKs.
     match /{document=**} {
       allow read, write: if false;
     }
