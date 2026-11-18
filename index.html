@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>I.M.G GAMING</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@700;800&display=swap');
+:root{--bg:#f4f6fb;--card:#fff;--text:#172033;--muted:#778198;--line:#e2e7f0;--blue:#246bfe}
+[data-theme=dark]{--bg:#080d19;--card:#111a2b;--text:#eef3ff;--muted:#9aa9c2;--line:#26344b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Cairo,sans-serif;padding-bottom:90px}
+button,input{font:inherit}
+button{cursor:pointer}
+.topbar{height:70px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4%;position:sticky;top:0;z-index:10}
+.logo{font:800 21px Orbitron;color:var(--blue);white-space:nowrap}
+.top-search{flex:1;max-width:430px}
+input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:10px 12px;min-width:0}
+.top-search input{width:100%}
+.top-actions{display:flex;gap:7px}
+button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:11px;padding:9px 13px}
+.primary{background:var(--blue);color:white;border-color:var(--blue);font-weight:800}
+main{max-width:1200px;margin:auto;padding:25px 18px}
+.page{display:none}.page.active{display:block}
+.hero{min-height:260px;border-radius:24px;padding:38px;display:flex;align-items:center;background:radial-gradient(circle at 80% 20%,#397cff77,transparent 30%),linear-gradient(115deg,#101a30,#173b72);color:white}
+.hero h1{font-size:clamp(28px,5vw,48px);margin:10px 0}
+.hero p{color:#c6d7f5}
+.eyebrow{color:#65a0ff;font:700 11px Orbitron}
+.heading{margin:30px 0 13px}
+.heading h2{margin:4px 0}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:17px;min-width:0}
+.stat-label,.muted{color:var(--muted)}
+.stat-value{display:block;font:800 26px Orbitron;margin-top:8px}
+.bar{height:8px;background:var(--line);border-radius:10px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),#76aaff)}
+.game-card{padding:0;overflow:hidden;cursor:pointer}
+.game-art{height:135px;display:grid;place-items:center;background:linear-gradient(135deg,#172b4c,#356dc0);color:white;font:800 19px Orbitron;position:relative}
+.age{position:absolute;bottom:8px;right:8px;background:#000b;color:white;padding:2px 7px;border-radius:6px;font:700 11px Cairo}
+.game-info{padding:12px}
+.game-info h3{margin:0 0 3px;font-size:15px}
+.game-info p{margin:0;color:var(--muted);font-size:12px}
+.page-title{margin:8px 0 24px}
+.page-title h1{margin:3px 0;font-size:32px}
+.page-title p{color:var(--muted)}
+.filters{display:flex;gap:10px;margin-bottom:17px}
+.filters input{flex:1;width:100%}
+.filters select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:9px}
+.achievement{border-right:4px solid var(--rarity);padding:14px}
+.achievement h3{margin:0 0 5px;font-size:15px}
+.achievement p{font-size:12px;color:var(--muted);margin:0 0 10px}
+.achievement small{color:var(--muted)}
+.Common{--rarity:#aab3c2}.Uncommon{--rarity:#22a66b}.Rare{--rarity:#9664ec}.Epic{--rarity:#214b9b}.Legendary{--rarity:#d6a52a}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}
+.tabs button{border-radius:25px}.tabs button.selected{background:var(--blue);color:white}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form{display:grid;gap:10px;max-width:470px}
+.form input{width:100%}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.profile{display:flex;align-items:center;gap:15px}
+.avatar{width:65px;height:65px;border-radius:20px;background:linear-gradient(135deg,#246bfe,#70a5ff);display:grid;place-items:center;color:white;font:800 27px Orbitron}
+.profile-info{flex:1}
+.profile-info h2{margin:0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.hidden{display:none!important}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:73px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;align-items:center;gap:clamp(8px,5vw,45px);z-index:20}
+.bottom-nav button{border:0;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px;color:var(--muted);font-size:19px}
+.bottom-nav small{font-size:10px}
+.bottom-nav button.active{color:var(--blue)}
+.bottom-nav .home-btn{background:var(--blue);color:white;border-radius:15px;padding:9px 16px;margin-top:-20px}
+.toast{display:none;position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:#14223a;color:white;padding:11px 18px;border-radius:12px;z-index:30;max-width:90%;text-align:center}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:25px}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+ .topbar{padding:0 10px;gap:7px;height:62px}
+ .logo{font-size:15px}
+ .top-search input{font-size:12px;padding:8px}
+ .top-actions button{padding:7px}
+ .hero{padding:25px;min-height:230px}
+ .hero h1{font-size:30px}
+ .two-col{grid-template-columns:1fr}
+ .bottom-nav{gap:clamp(3px,3vw,13px)}
+ .bottom-nav button{font-size:17px}
+ .bottom-nav small{font-size:9px}
+ .bottom-nav .home-btn{padding:8px 12px}
+ .page-title h1{font-size:27px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+ <a class="logo" href="#" onclick="showPage('home');return false">I.M.G GAMING</a>
+ <div class="top-search"><input id="globalSearch" placeholder="ابحث عن الألعاب..."></div>
+ <div class="top-actions">
+  <button id="themeBtn" title="تغيير المظهر">☾</button>
+  <button id="accountBtn" title="الحساب">♙</button>
+ </div>
+</header>
+
+<main>
+
+<!-- HOME -->
+<section class="page active" id="page-home">
+ <div class="hero">
+  <div>
+   <span class="eyebrow">INTERACTIVE · MULTIPLIER · GAMES</span>
+   <h1>عالمك. ألعابك. إنجازاتك.</h1>
+   <p>العب واجمع النقاط وارفع مستواك واصنع اسمك في I.M.G GAMING.</p>
+   <button class="primary" data-page="games">استكشف الألعاب</button>
+  </div>
+ </div>
+
+ <div class="heading"><span class="eyebrow">PLAYER DASHBOARD</span><h2>لوحة اللاعب</h2></div>
+ <div class="grid">
+  <article class="card">
+   <span class="stat-label">المستوى</span>
+   <strong class="stat-value" id="homeLevel">1</strong>
+   <small class="muted" id="homeXp">0 / 100 XP</small>
+   <div class="bar"><i id="homeXpBar"></i></div>
+  </article>
+  <article class="card">
+   <span class="stat-label">رصيد العملات</span>
+   <strong class="stat-value" id="homeCoins">0 🪙</strong>
+   <small class="muted">عملات I.M.G</small>
+  </article>
+  <article class="card">
+   <span class="stat-label">الإنجازات</span>
+   <strong class="stat-value" id="homeAchievements">0/150</strong>
+   <small class="muted" id="homeAchPercent">0% مكتمل</small>
+   <div class="bar"><i id="homeAchBar"></i></div>
+  </article>
+  <article class="card">
+   <span class="stat-label">سلسلة الحضور</span>
+   <strong class="stat-value" id="homeStreak">0 🔥</strong>
+   <button class="primary" id="checkinBtn">تسجيل الحضور</button>
+  </article>
+ </div>
+
+ <div class="heading"><span class="eyebrow">FEATURED GAMES</span><h2>ألعاب مميزة</h2></div>
+ <div class="grid" id="homeGames"></div>
+
+ <div class="heading"><span class="eyebrow">GLOBAL RANKING</span><h2>أفضل اللاعبين</h2></div>
+ <div class="card" id="leaderboard"><p class="muted">سجّل الدخول لعرض لوحة الصدارة.</p></div>
+
+ <div class="heading"><span class="eyebrow">COMMUNITY</span><h2>إحصائيات اللاعبين</h2></div>
+ <div class="grid">
+  <div class="card"><span class="muted">اللاعبون المسجلون</span><strong class="stat-value" id="playersCount">—</strong></div>
+  <div class="card"><span class="muted">إنجازاتك المكتملة</span><strong class="stat-value" id="homeCompleted">0</strong></div>
+ </div>
+</section>
+
+<!-- GAMES -->
+<section class="page" id="page-games">
+ <div class="page-title"><span class="eyebrow">GAME LIBRARY</span><h1>مكتبة الألعاب</h1><p>اختار لعبتك وابدأ التحدي.</p></div>
+ <div class="filters">
+  <input id="gamesFilter" placeholder="ابحث باسم اللعبة أو النوع">
+  <select id="categoryFilter">
+   <option value="all">كل التصنيفات</option>
+   <option value="استراتيجية">استراتيجية</option>
+   <option value="مغامرات">مغامرات</option>
+   <option value="قتال">قتال</option>
+   <option value="سباقات">سباقات</option>
+  </select>
+ </div>
+ <div class="grid" id="gamesGrid"></div>
+</section>
+
+<!-- ACHIEVEMENTS -->
+<section class="page" id="page-achievements">
+ <div class="page-title"><span class="eyebrow">YOUR TROPHY ROOM</span><h1>الإنجازات</h1><p>150 إنجازًا ثابتًا من Common إلى Legendary.</p></div>
+ <div class="card">
+  <strong id="achCount">0 / 150</strong>
+  <div class="bar"><i id="achBar"></i></div>
+  <p class="muted" id="achPercent">0%</p>
+ </div>
+ <div class="tabs" id="rarityTabs">
+  <button class="selected" data-rarity="all">الكل</button>
+  <button data-rarity="Common">Common</button>
+  <button data-rarity="Uncommon">Uncommon</button>
+  <button data-rarity="Rare">Rare</button>
+  <button data-rarity="Epic">Epic</button>
+  <button data-rarity="Legendary">Legendary</button>
+ </div>
+ <div class="grid" id="achievementGrid"><div class="card empty">سجّل الدخول لعرض الإنجازات.</div></div>
+</section>
+
+<!-- STORE -->
+<section class="page" id="page-store">
+ <div class="page-title"><span class="eyebrow">I.M.G MARKET</span><h1>المتجر</h1><p>استخدم عملاتك واستبدل أكواد المكافآت.</p></div>
+ <div class="card"><span class="muted">رصيدك الحالي</span><strong class="stat-value" id="storeCoins">0 🪙</strong></div>
+ <div class="two-col">
+  <div class="card">
+   <h3>استبدال كود</h3>
+   <p class="muted">أدخل كود المكافأة الخاص بك.</p>
+   <input id="redeemInput" placeholder="IMG-XXXXXXXXXXXX" style="width:100%">
+   <button id="redeemBtn" class="primary" style="margin-top:10px">استبدال</button>
+   <p id="redeemMessage" class="muted"></p>
+  </div>
+  <div class="card">
+   <h3>عناصر حسابك</h3>
+   <div id="inventoryList" class="muted">سجّل الدخول لعرض العناصر.</div>
+  </div>
+ </div>
+ <div class="heading"><span class="eyebrow">GAME PASS</span><h2>الخلفيات والاشتراكات</h2></div>
+ <div class="card">
+  <p>قسم الخلفيات وGame Pass سيتم تفعيله بعد استكمال نظام الشراء الآمن. لن يتم خصم أي عملات قبل تفعيل النظام.</p>
+ </div>
+</section>
+
+<!-- PROFILE -->
+<section class="page" id="page-profile">
+ <div class="page-title"><span class="eyebrow">PLAYER ID</span><h1>ملف اللاعب</h1></div>
+ <div class="card profile">
+  <div class="avatar" id="profileAvatar">P</div>
+  <div class="profile-info">
+   <h2 id="profileName">زائر</h2>
+   <p class="muted" id="profileEmail">سجّل الدخول لحفظ تقدمك.</p>
+   <span class="muted" id="profileLevel">LEVEL 1</span>
+  </div>
+  <button id="editProfileBtn" class="hidden">تعديل الاسم</button>
+ </div>
+ <div class="card">
+  <h2>حساب I.M.G</h2>
+  <p class="muted">سجّل الدخول أو أنشئ حسابًا لحفظ تقدمك.</p>
+  <div class="form" id="authForm">
+   <input id="authName" placeholder="اسم اللاعب (للحساب الجديد)">
+   <input id="authEmail" type="email" placeholder="البريد الإلكتروني">
+   <input id="authPassword" type="password" placeholder="كلمة المرور">
+   <div class="actions">
+    <button id="loginBtn" class="primary">تسجيل الدخول</button>
+    <button id="signupBtn">إنشاء حساب</button>
+   </div>
+  </div>
+  <p id="authMessage" class="muted"></p>
+  <button id="logoutBtn" class="hidden">تسجيل الخروج</button>
+ </div>
+</section>
+
+<!-- MY PROGRESS -->
+<section class="page" id="page-progress">
+ <div class="page-title"><span class="eyebrow">PLAYER JOURNEY</span><h1>MY PROGRESS</h1><p>كل تقدمك ومستواك ومكافآتك في مكان واحد.</p></div>
+ <div class="grid">
+  <div class="card"><span class="muted">المستوى الحالي</span><strong class="stat-value" id="progressLevel">1</strong></div>
+  <div class="card"><span class="muted">إجمالي XP</span><strong class="stat-value" id="progressTotalXp">0</strong></div>
+  <div class="card"><span class="muted">العملات</span><strong class="stat-value" id="progressCoins">0</strong></div>
+ </div>
+ <div class="heading"><h2>تقدم المستوى</h2></div>
+ <div class="card"><div class="bar"><i id="progressXpBar"></i></div><p id="progressXpText" class="muted">0 XP</p></div>
+ <div class="heading"><h2>تقدم الإنجازات</h2></div>
+ <div class="card">
+  <strong id="progressAchCount">0 / 150</strong>
+  <div class="bar"><i id="progressAchBar"></i></div>
+  <p id="progressAchPercent" class="muted">0% مكتمل</p>
+ </div>
+ <div class="heading"><h2>الإنجازات المكتملة</h2></div>
+ <div class="card" id="earnedList"><p class="muted">سجّل الدخول لعرض إنجازاتك.</p></div>
+ <div class="heading"><h2>المضاعفات المحفوظة</h2></div>
+ <div class="card" id="boostList"><p class="muted">لا توجد بيانات بعد.</p></div>
+</section>
+
+</main>
+
+<!-- ترتيب القائمة ثابت وHOME في المنتصف -->
+<nav class="bottom-nav">
+ <button data-page="store">▣<small>المتجر</small></button>
+ <button data-page="achievements">🏆<small>الإنجازات</small></button>
+ <button data-page="home" class="home-btn active">⌂<small>HOME</small></button>
+ <button data-page="games" id="navSearch">⌕<small>بحث</small></button>
+ <button data-page="profile">♙<small>حسابي</small></button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+(() => {
+'use strict';
+
+const $ = id => document.getElementById(id);
+const call = (name,data={}) =>
+ firebase.app().functions('europe-west1').httpsCallable(name)(data).then(r=>r.data);
+
+let currentUser=null;
+let player=null;
+let catalog=[];
+let earned=new Set();
+let progress={};
+let inventory=[];
+let selectedRarity='all';
+
+const games=[
+ {name:'BED WARS',ar:'حروب الأسرّة',category:'استراتيجية',age:'7+',href:'bed-wars.html'},
+ {name:'ROBOT HORROR',ar:'رعب الروبوت',category:'مغامرات',age:'12+',href:'robot-horror.html'},
+ {name:'STREET FIGHTER',ar:'قتال الشوارع',category:'قتال',age:'12+',href:'street-fighter.html'},
+ {name:'FORZA',ar:'فورزا',category:'سباقات',age:'7+',href:'Forza_browzer_game'}
+];
+
+function toast(message){
+ const el=$('toast');
+ el.textContent=message;
+ el.style.display='block';
+ clearTimeout(toast.timer);
+ toast.timer=setTimeout(()=>el.style.display='none',2800);
+}
+
+function showPage(name){
+ document.querySelectorAll('.page').forEach(p=>
+  p.classList.toggle('active',p.id==='page-'+name)
+ );
+ document.querySelectorAll('[data-page]').forEach(b=>
+  b.classList.toggle('active',b.dataset.page===name)
+ );
+ window.scrollTo({top:0,behavior:'smooth'});
+ if(name==='achievements')renderAchievements();
+ if(name==='games')renderGames();
+}
+
+document.querySelectorAll('[data-page]').forEach(button=>{
+ button.addEventListener('click',()=>showPage(button.dataset.page));
+});
+
+$('accountBtn').addEventListener('click',()=>showPage('profile'));
+
+$('navSearch').addEventListener('click',()=>{
+ showPage('games');
+ setTimeout(()=>$('gamesFilter').focus(),150);
+});
+
+$('globalSearch').addEventListener('keydown',e=>{
+ if(e.key==='Enter'){
+  $('gamesFilter').value=e.target.value;
+  showPage('games');
+  renderGames();
+ }
+});
+
+$('themeBtn').addEventListener('click',()=>{
+ const dark=document.documentElement.dataset.theme!=='dark';
+ document.documentElement.dataset.theme=dark?'dark':'light';
+ localStorage.setItem('img-theme',dark?'dark':'light');
+ $('themeBtn').textContent=dark?'☀':'☾';
+});
+
+if(localStorage.getItem('img-theme')==='dark'){
+ document.documentElement.dataset.theme='dark';
+ $('themeBtn').textContent='☀';
+}
+
+function gameCard(g){
+ return `<article class="card game-card" data-game="${g.name}">
+  <div class="game-art">${g.name}<span class="age">${g.age}</span></div>
+  <div class="game-info"><h3>${g.ar}</h3><p>${g.name} · ${g.category}</p></div>
+ </article>`;
+}
+
+function renderGames(){
+ const q=$('gamesFilter').value.trim().toLowerCase();
+ const category=$('categoryFilter').value;
+ const filtered=games.filter(g=>
+  (!q||(g.name+' '+g.ar+' '+g.category).toLowerCase().includes(q)) &&
+  (category==='all'||g.category===category)
+ );
+ $('gamesGrid').innerHTML=filtered.length
+  ?filtered.map(gameCard).join('')
+  :'<div class="empty">لا توجد ألعاب مطابقة للبحث.</div>';
+
+ $('homeGames').innerHTML=games.slice(0,3).map(gameCard).join('');
+
+ document.querySelectorAll('[data-game]').forEach(card=>{
+  card.addEventListener('click',()=>{
+   const game=games.find(g=>g.name===card.dataset.game);
+   if(game)location.href=game.href;
+  });
+ });
+}
+
+$('gamesFilter').addEventListener('input',renderGames);
+$('categoryFilter').addEventListener('change',renderGames);
+renderGames();
+
+function updatePlayerUI(){
+ if(!player)return;
+
+ const level=player.level||1;
+ const xp=player.xp||0;
+ const needed=player.xpToNextLevel ?? level*100-xp;
+ const coins=player.coins||0;
+ const completed=player.achievementsCompleted||0;
+ const percent=Math.round(completed/150*100);
+ const xpPercent=needed+xp>0?xp/(needed+xp)*100:100;
+
+ $('homeLevel').textContent=level;
+ $('homeXp').textContent=xp+' / '+(xp+needed)+' XP';
+ $('homeXpBar').style.width=xpPercent+'%';
+ $('homeCoins').textContent=coins+' 🪙';
+ $('homeAchievements').textContent=completed+'/150';
+ $('homeAchPercent').textContent=percent+'% مكتمل';
+ $('homeAchBar').style.width=percent+'%';
+ $('homeStreak').textContent=(player.attendanceStreak||0)+' 🔥';
+ $('homeCompleted').textContent=completed;
+
+ $('storeCoins').textContent=coins+' 🪙';
+ $('progressLevel').textContent=level;
+ $('progressTotalXp').textContent=player.totalXp||0;
+ $('progressCoins').textContent=coins+' 🪙';
+ $('progressXpBar').style.width=xpPercent+'%';
+ $('progressXpText').textContent=xp+' / '+(xp+needed)+' XP للمستوى التالي';
+ $('progressAchCount').textContent=completed+' / 150';
+ $('progressAchBar').style.width=percent+'%';
+ $('progressAchPercent').textContent=percent+'% مكتمل';
+
+ $('achCount').textContent=completed+' / 150';
+ $('achBar').style.width=percent+'%';
+ $('achPercent').textContent=percent+'%';
+
+ const name=player.displayName||currentUser.displayName||'Player';
+ $('profileName').textContent=name;
+ $('profileAvatar').textContent=name.charAt(0).toUpperCase();
+ $('profileLevel').textContent='LEVEL '+level;
+}
+
+async function loadPlayer(){
+ if(!currentUser)return;
+
+ try{
+  const playerSnap=await db.collection('players').doc(currentUser.uid).get();
+
+  if(playerSnap.exists){
+   player=playerSnap.data();
+   updatePlayerUI();
+  }
+
+  const [achSnap,progressSnap,inventorySnap]=await Promise.all([
+   db.collection('playerAchievements').doc(currentUser.uid).collection('items').get(),
+   db.collection('achievementProgress').doc(currentUser.uid).collection('items').get(),
+   db.collection('inventory').doc(currentUser.uid).collection('items').get()
+  ]);
+
+  earned=new Set(achSnap.docs.map(d=>d.id));
+  progress=Object.fromEntries(progressSnap.docs.map(d=>[d.id,d.data()]));
+  inventory=inventorySnap.docs.map(d=>({id:d.id,...d.data()}));
+
+  renderAchievements();
+  renderEarned();
+  renderInventory();
+  renderBoosts();
+  loadLeaderboard();
+
+ }catch(error){
+  console.error(error);
+  toast('تعذر تحميل بيانات الحساب: '+error.message);
+ }
+}
+
+async function loadCatalog(){
+ if(!currentUser)return;
+
+ try{
+  const result=await call('getAchievementCatalog');
+  catalog=result.achievements||[];
+  renderAchievements();
+ }catch(error){
+  console.error(error);
+  $('achievementGrid').innerHTML=
+   '<div class="card empty">تعذر تحميل قائمة الإنجازات. تأكد من نشر وظائف Firebase.</div>';
+ }
+}
+
+function renderAchievements(){
+ if(!currentUser){
+  $('achievementGrid').innerHTML='<div class="card empty">سجّل الدخول لعرض إنجازاتك.</div>';
+  return;
+ }
+
+ if(!catalog.length){
+  $('achievementGrid').innerHTML='<div class="card empty">جاري تحميل الإنجازات...</div>';
+  return;
+ }
+
+ const list=catalog.filter(a=>
+  selectedRarity==='all'||a.rarity===selectedRarity
+ );
+
+ $('achievementGrid').innerHTML=list.map(a=>{
+  const done=earned.has(a.id);
+  const value=progress[a.id]?.progress||0;
+  const target=a.condition?.target||1;
+
+  return `<article class="card achievement ${a.rarity}">
+   <h3>${done?'🏆':'🔒'} ${a.title}</h3>
+   <p>${a.description}</p>
+   <small>${a.rarity} · ${done?'مكتمل':Math.min(value,target)+' / '+target}</small>
+   <div class="row"><small>XP +${a.reward?.xp||0}</small><small>🪙 +${a.reward?.coins||0}</small></div>
+  </article>`;
+ }).join('');
+}
+
+$('rarityTabs').addEventListener('click',e=>{
+ const button=e.target.closest('[data-rarity]');
+ if(!button)return;
+
+ selectedRarity=button.dataset.rarity;
+ document.querySelectorAll('#rarityTabs button').forEach(b=>
+  b.classList.toggle('selected',b===button)
+ );
+ renderAchievements();
+});
+
+function renderEarned(){
+ const list=Array.from(earned)
+  .map(id=>catalog.find(a=>a.id===id))
+  .filter(Boolean);
+
+ $('earnedList').innerHTML=list.length
+  ?list.map(a=>`<div class="row"><b>🏆 ${a.title}</b><span>${a.rarity}</span></div>`).join('')
+  :'<p class="muted">لم تفتح أي إنجاز بعد.</p>';
+}
+
+function renderInventory(){
+ const list=inventory.filter(i=>
+  i.type==='xp_boost'||i.type==='coins_boost'
+ );
+
+ $('inventoryList').innerHTML=list.length
+  ?list.map(i=>`<div class="row">
+    <b>${i.type==='xp_boost'?'مضاعف XP':'مضاعف العملات'}</b>
+    <span>×${i.multiplier||2}</span>
+    <span>${i.status==='stored'?'محفوظ':'مستخدم'}</span>
+   </div>`).join('')
+  :'<p class="muted">لا توجد عناصر حاليًا.</p>';
+}
+
+function renderBoosts(){
+ const list=inventory.filter(i=>
+  ['xp_boost','coins_boost'].includes(i.type)&&i.status==='stored'
+ );
+
+ $('boostList').innerHTML=list.length
+  ?list.map(i=>`<div class="row">
+   <b>${i.type==='xp_boost'?'مضاعف XP ×2':'مضاعف عملات ×2'}</b>
+   <span>${i.durationMinutes||60} دقيقة</span>
+   <button data-boost="${i.id}" data-type="${i.type}" class="primary">تفعيل</button>
+  </div>`).join('')
+  :'<p class="muted">لا توجد مضاعفات محفوظة.</p>';
+
+ document.querySelectorAll('[data-boost]').forEach(button=>{
+  button.addEventListener('click',async()=>{
+   try{
+    const functionName=button.dataset.type==='xp_boost'
+     ?'activateXpBoost':'activateCoinsBoost';
+    await call(functionName,{boostId:button.dataset.boost});
+    toast('تم تفعيل المضاعف بنجاح.');
+    await loadPlayer();
+   }catch(error){toast(error.message)}
+  });
+ }
+}
+
+async function loadLeaderboard(){
+ if(!currentUser)return;
+
+ try{
+  const snap=await db.collection('leaderboards').doc('global')
+   .collection('entries').orderBy('totalXp','desc').limit(10).get();
+
+  $('leaderboard').innerHTML=snap.empty
+   ?'<p class="muted">لا يوجد لاعبون في لوحة الصدارة بعد.</p>'
+   :snap.docs.map((doc,index)=>{
+    const p=doc.data();
+    return `<div class="row">
+     <b>#${index+1} ${escapeText(p.displayName||'Player')}</b>
+     <span>LV ${p.level||1}</span>
+     <span>${p.totalXp||0} XP</span>
+    </div>`;
+   }).join('');
+ }catch(error){
+  $('leaderboard').innerHTML='<p class="muted">لوحة الصدارة غير متاحة حاليًا.</p>';
+ }
+}
+
+function escapeText(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+ }[c]));
+}
+
+async function loadPlayersCount(){
+ try{
+  const snap=await db.collection('publicProfiles').get();
+  $('playersCount').textContent=snap.size.toLocaleString('en-US');
+ }catch(error){
+  $('playersCount').textContent='—';
+ }
+}
+
+$('loginBtn').addEventListener('click',async()=>{
+ try{
+  await auth.signInWithEmailAndPassword(
+   $('authEmail').value.trim(),
+   $('authPassword').value
+  );
+ }catch(error){$('authMessage').textContent=error.message}
+});
+
+$('signupBtn').addEventListener('click',async()=>{
+ const name=$('authName').value.trim();
+ if(name.length<2){
+  $('authMessage').textContent='اكتب اسم لاعب من حرفين على الأقل.';
+  return;
+ }
+
+ try{
+  const credential=await auth.createUserWithEmailAndPassword(
+   $('authEmail').value.trim(),
+   $('authPassword').value
+  );
+  await credential.user.updateProfile({displayName:name});
+  $('authMessage').textContent='تم إنشاء الحساب.';
+ }catch(error){$('authMessage').textContent=error.message}
+});
+
+$('logoutBtn').addEventListener('click',()=>auth.signOut());
+
+$('editProfileBtn').addEventListener('click',async()=>{
+ if(!currentUser)return;
+
+ const name=prompt('اكتب اسم اللاعب الجديد',player?.displayName||'');
+ if(name===null)return;
+
+ try{
+  await call('updatePlayerProfile',{
+   displayName:name.trim(),
+   avatarId:player?.avatarId||'default'
+  });
+  toast('تم تحديث الملف.');
+  await loadPlayer();
+ }catch(error){toast(error.message)}
+});
+
+$('checkinBtn').addEventListener('click',async()=>{
+ if(!currentUser){
+  showPage('profile');
+  toast('سجّل الدخول أولًا.');
+  return;
+ }
+
+ const button=$('checkinBtn');
+ button.disabled=true;
+
+ try{
+  const result=await call('dailyCheckIn');
+  toast(result.alreadyCheckedIn
+   ?'سجلت حضورك اليوم بالفعل.'
+   :'تم تسجيل الحضور! مكافأتك '+result.totalReward+' عملة.');
+  await loadPlayer();
+ }catch(error){toast(error.message)}
+ finally{button.disabled=false}
+});
+
+$('redeemBtn').addEventListener('click',async()=>{
+ if(!currentUser){
+  showPage('profile');
+  toast('سجّل الدخول أولًا.');
+  return;
+ }
+
+ const code=$('redeemInput').value.trim();
+ if(!code)return;
+
+ try{
+  await call('redeemStoreCode',{code});
+  $('redeemMessage').textContent='تم استبدال الكود بنجاح.';
+  $('redeemInput').value='';
+  toast('تم استلام المكافأة.');
+  await loadPlayer();
+ }catch(error){
+  $('redeemMessage').textContent=error.message;
+ }
+});
+
+auth.onAuthStateChanged(async user=>{
+ currentUser=user;
+
+ $('authForm').classList.toggle('hidden',!!user);
+ $('logoutBtn').classList.toggle('hidden',!user);
+ $('editProfileBtn').classList.toggle('hidden',!user);
+
+ $('profileEmail').textContent=user
+  ?user.email:'سجّل الدخول لحفظ تقدمك.';
+
+ if(user){
+  $('authMessage').textContent='تم تسجيل الدخول.';
+  await Promise.all([loadPlayer(),loadCatalog()]);
+ }else{
+  player=null;
+  catalog=[];
+  earned.clear();
+  progress={};
+  inventory=[];
+
+  $('profileName').textContent='زائر';
+  $('profileAvatar').textContent='P';
+  $('profileLevel').textContent='LEVEL 1';
+  $('authMessage').textContent='';
+  $('leaderboard').innerHTML='<p class="muted">سجّل الدخول لعرض لوحة الصدارة.</p>';
+  $('achievementGrid').innerHTML='<div class="card empty">سجّل الدخول لعرض الإنجازات.</div>';
+  $('earnedList').innerHTML='<p class="muted">سجّل الدخول لعرض إنجازاتك.</p>';
+  $('inventoryList').textContent='سجّل الدخول لعرض العناصر.';
+  $('boostList').textContent='لا توجد بيانات بعد.';
+ }
+});
+
+loadPlayersCount();
+
+})();
+</script>
+</body>
+</html>
