@@ -1,12 +1,12 @@
 /* I.M.G GAMING - Firebase Configuration */
 
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
+  apiKey: "AIzaSyDkkNRFc3_lwbtvBDe0LxSFqBTqVe_-PXM",
   authDomain: "img-2a473.firebaseapp.com",
   projectId: "img-2a473",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_FIREBASE_APP_ID"
+  storageBucket: "img-2a473.firebasestorage.app",
+  messagingSenderId: "534617572811",
+  appId: "1:534617572811:web:93d389efe30ca9c8c3a24e"
 };
 
 if (!firebase.apps.length) {
