@@ -865,7 +865,7 @@ exports.updatePlayerProfile =
 
 // ------------------------------------
 // DAILY ATTENDANCE
-// 50 coins daily + 500 on every 7th day
+// 50 coins daily + 250 on every 7th day
 // ------------------------------------
 
 exports.dailyCheckIn =
@@ -1356,7 +1356,6 @@ exports.adminCreateRedeemCode =
 exports.redeemStoreCode =
   onCall({ region: REGION }, async (request) => {
     const uid = requireAuth(request);
-
     const rawCode = request.data?.code;
 
     if (
@@ -1364,180 +1363,139 @@ exports.redeemStoreCode =
       rawCode.trim().length < 8 ||
       rawCode.trim().length > 40
     ) {
-      throw new HttpsError(
-        'invalid-argument',
-        'Invalid code.'
-      );
+      throw new HttpsError('invalid-argument', 'Invalid code.');
     }
 
-    const normalizedCode =
-      rawCode.trim().toUpperCase();
+    const normalizedCode = rawCode.trim().toUpperCase();
+    const hash = crypto.createHash('sha256')
+      .update(normalizedCode)
+      .digest('hex');
 
-    const hash =
-      crypto.createHash('sha256')
-        .update(normalizedCode)
-        .digest('hex');
-
-    const codeRef =
-      db.collection('redeemCodes').doc(hash);
-
+    const codeRef = db.collection('redeemCodes').doc(hash);
     const pRef = playerRef(uid);
 
-    const transactionRef =
-      db.collection('transactions')
-        .doc(uid)
-        .collection('items')
-        .doc(`redeem-${hash}`);
+    const transactionRef = db.collection('transactions')
+      .doc(uid)
+      .collection('items')
+      .doc(`redeem-${hash}`);
 
-    const result = await db.runTransaction(
-      async (transaction) => {
-        const [codeSnap, playerSnap] =
-          await Promise.all([
-            transaction.get(codeRef),
-            transaction.get(pRef)
-          ]);
+    const result = await db.runTransaction(async (transaction) => {
+      const [codeSnap, playerSnap] = await Promise.all([
+        transaction.get(codeRef),
+        transaction.get(pRef)
+      ]);
 
-        if (!codeSnap.exists) {
-          throw new HttpsError(
-            'not-found',
-            'Code not found.'
-          );
-        }
-
-        if (!playerSnap.exists) {
-          throw new HttpsError(
-            'failed-precondition',
-            'Player profile is missing.'
-          );
-        }
-
-        const code = codeSnap.data();
-
-        if (code.used) {
-          throw new HttpsError(
-            'already-exists',
-            'This code has already been redeemed.'
-          );
-        }
-
-        const player = playerSnap.data();
-
-        const now = FieldValue.serverTimestamp();
-
-        if (code.type === 'coins') {
-          if (!ALLOWED_COIN_REWARDS.includes(code.amount)) {
-            throw new HttpsError(
-              'failed-precondition',
-              'Invalid code reward.'
-            );
-          }
-
-          const actual =
-            grantCoinsInTransaction(
-              player,
-              code.amount
-            );
-
-          transaction.update(
-            pRef,
-            {
-              coins: (player.coins || 0) + actual,
-              updatedAt: now
-            }
-          );
-
-          transaction.create(
-            transactionRef,
-            {
-              type: 'redeem_code',
-              amount: actual,
-              createdAt: now
-            }
-          );
-        } else if (
-          code.type === 'xp_boost' ||
-          code.type === 'coins_boost'
-        ) {
-          if (
-            code.multiplier !== 2 ||
-            !Number.isInteger(code.durationHours) ||
-            code.durationHours < 1 ||
-            code.durationHours > 24
-          ) {
-            throw new HttpsError(
-              'failed-precondition',
-              'Invalid boost code reward.'
-            );
-          }
-
-          const itemRef =
-            inventoryRef(uid).doc(`code-${hash}`);
-
-          transaction.create(
-            itemRef,
-            {
-              type: code.type,
-              multiplier: 2,
-              durationHours: code.durationHours,
-              durationMinutes: code.durationHours * 60,
-              status: 'stored',
-              source: 'redeem_code',
-              createdAt: now
-            }
-          );
-
-          transaction.create(
-            transactionRef,
-            {
-              type: 'redeem_code',
-              rewardType: code.type,
-              durationHours: code.durationHours,
-              createdAt: now
-            }
-          );
-        } else {
-          throw new HttpsError(
-            'failed-precondition',
-            'Unsupported code reward.'
-          );
-        }
-
-        transaction.update(
-          codeRef,
-          {
-            used: true,
-            usedBy: uid,
-            usedAt: now
-          }
-        );
-
-        return {
-          success: true,
-          rewardType: code.type,
-          amount:
-            code.type === 'coins'
-              ? code.amount
-              : null
-        };
+      if (!codeSnap.exists) {
+        throw new HttpsError('not-found', 'Code not found.');
       }
-    );
+
+      if (!playerSnap.exists) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Player profile is missing.'
+        );
+      }
+
+      const code = codeSnap.data();
+
+      if (code.used) {
+        throw new HttpsError(
+          'already-exists',
+          'This code has already been redeemed.'
+        );
+      }
+
+      const player = playerSnap.data();
+      const now = FieldValue.serverTimestamp();
+
+      let actualAmount = null;
+
+      if (code.type === 'coins') {
+        if (!ALLOWED_COIN_REWARDS.includes(code.amount)) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Invalid code reward.'
+          );
+        }
+
+        actualAmount = grantCoinsInTransaction(player, code.amount);
+
+        transaction.update(pRef, {
+          coins: (player.coins || 0) + actualAmount,
+          updatedAt: now
+        });
+
+        transaction.create(transactionRef, {
+          type: 'redeem_code',
+          amount: actualAmount,
+          createdAt: now
+        });
+      } else if (
+        code.type === 'xp_boost' ||
+        code.type === 'coins_boost'
+      ) {
+        if (
+          code.multiplier !== 2 ||
+          !Number.isInteger(code.durationHours) ||
+          code.durationHours < 1 ||
+          code.durationHours > 24
+        ) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Invalid boost code reward.'
+          );
+        }
+
+        const itemRef = inventoryRef(uid).doc(`code-${hash}`);
+
+        transaction.create(itemRef, {
+          type: code.type,
+          multiplier: 2,
+          durationHours: code.durationHours,
+          durationMinutes: code.durationHours * 60,
+          status: 'stored',
+          source: 'redeem_code',
+          createdAt: now
+        });
+
+        transaction.create(transactionRef, {
+          type: 'redeem_code',
+          rewardType: code.type,
+          durationHours: code.durationHours,
+          createdAt: now
+        });
+      } else {
+        throw new HttpsError(
+          'failed-precondition',
+          'Unsupported code reward.'
+        );
+      }
+
+      transaction.update(codeRef, {
+        used: true,
+        usedBy: uid,
+        usedAt: now
+      });
+
+      return {
+        success: true,
+        rewardType: code.type,
+        amount: code.type === 'coins' ? code.amount : null,
+        actualAmount
+      };
+    });
 
     if (result.rewardType === 'coins') {
-      await awardAchievementEvent(
-        uid,
-        'coins_earned',
-        {
-          eventId: `redeem-coins-${hash}`,
-          amount: result.amount,
-          value: result.amount
-        }
-      );
+      await awardAchievementEvent(uid, 'coins_earned', {
+        eventId: `redeem-coins-${hash}`,
+        amount: result.actualAmount,
+        value: result.actualAmount
+      });
     }
 
     return result;
   });
-
-// ------------------------------------
+--------------------------
 // GET ACHIEVEMENT CATALOG
 // ------------------------------------
 
