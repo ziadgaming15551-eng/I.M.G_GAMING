@@ -18,7 +18,7 @@ const REGION = 'europe-west1';
 const TIME_ZONE = 'Africa/Cairo';
 const MAX_LEVEL = 100;
 const DAILY_COINS = 50;
-const WEEKLY_STREAK_BONUS = 500;
+const WEEKLY_STREAK_BONUS = 250;
 
 const ALLOWED_COIN_REWARDS = [
   100, 250, 500, 1000, 2000, 5000
