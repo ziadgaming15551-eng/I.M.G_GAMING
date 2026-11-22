@@ -2756,13 +2756,13 @@
       "metric": "count",
       "target": 150
     },
-    "reward": {
-      "xp": 0,
-      "coins": 5000,
-      "title": "THE LEGEND",
-      "exclusiveFrame": "the_legend_royal_gold",
-      "xpNote": "لا يمنح XP إضافيًا"
-    },
+   "reward": {
+  "xp": 0,
+  "coins": 10000,
+  "title": "THE LEGEND",
+  "exclusiveFrame": null,
+  "xpNote": "لا يمنح XP إضافيًا"
+},
     "visibility": "hidden_until_150_completed",
     "specialCelebration": {
       "trophy": "original_gold_trophy_with_img_logo",
