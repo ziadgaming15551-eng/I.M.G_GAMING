@@ -869,7 +869,7 @@ exports.updatePlayerProfile =
 
 // ------------------------------------
 // DAILY ATTENDANCE
-// 50 coins daily + 250 on every 7th day
+// 50 coins daily + 500 on every 7th day
 // ------------------------------------
 
 exports.dailyCheckIn =
