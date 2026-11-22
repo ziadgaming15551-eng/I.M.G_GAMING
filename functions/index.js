@@ -255,7 +255,7 @@ function grantXpInTransaction(
       levelsGained += 1;
 
       // Every tenth level grants a stored XP boost.
-      if (level % 10 === 0) {
+      if (level % 10 === 0 && level < MAX_LEVEL) {
         const boostId = `milestone-xp-${level}`;
 
         const boostDoc =
