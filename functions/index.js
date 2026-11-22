@@ -138,7 +138,11 @@ function activeBoost(boost, now = Date.now()) {
 }
 
 function nextLevelCost(level) {
-  return level * 100;
+  if (level === 1) return 100;
+  if (level === 2) return 150;
+  if (level === 3 || level === 4) return 200;
+
+  return 300 + (level - 5) * 100;
 }
 
 // ------------------------------------
