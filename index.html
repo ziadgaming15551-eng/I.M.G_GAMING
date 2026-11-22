@@ -150,7 +150,10 @@ main{max-width:1200px;margin:auto;padding:25px 18px}
  <div class="grid">
   <div class="card"><span class="muted">اللاعبون المسجلون</span><strong class="stat-value" id="playersCount">—</strong></div>
   <div class="card"><span class="muted">إنجازاتك المكتملة</span><strong class="stat-value" id="homeCompleted">0</strong></div>
- </div>
+</div>
+<div class="heading">
+ <button class="primary" data-page="progress">عرض تقدمي MY PROGRESS</button>
+</div>
 </section>
 
 <!-- GAMES -->
@@ -518,13 +521,26 @@ $('rarityTabs').addEventListener('click',e=>{
 });
 
 function renderEarned(){
- const list=Array.from(earned)
-  .map(id=>catalog.find(a=>a.id===id))
-  .filter(Boolean);
+  const list = Array.from(earned)
+    .map(id => catalog.find(a => a.id === id))
+    .filter(Boolean);
 
- $('earnedList').innerHTML=list.length
-  ?list.map(a=>`<div class="row"><b>🏆 ${a.title}</b><span>${a.rarity}</span></div>`).join('')
-  :'<p class="muted">لم تفتح أي إنجاز بعد.</p>';
+  $('earnedList').innerHTML = list.length
+    ? list.map(a => `
+      <div class="row">
+        <b>🏆 ${escapeText(a.title)}</b>
+        <span>${escapeText(a.rarity)}</span>
+      </div>
+    `).join('')
+    : '<p class="muted">لم تفتح أي إنجاز بعد.</p>';
+
+  if (player?.secretAchievementUnlocked) {
+    $('earnedList').innerHTML += `
+      <div class="row">
+        <b>🏆 الإنجاز السري</b>
+        <span>Secret</span>
+      </div>`;
+  }
 }
 
 function renderInventory(){
@@ -612,7 +628,14 @@ $('loginBtn').addEventListener('click',async()=>{
   );
  }catch(error){$('authMessage').textContent=error.message}
 });
-
+$('googleLoginBtn').addEventListener('click', async () => {
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  } catch (error) {
+    $('authMessage').textContent = error.message;
+  }
+});
 $('signupBtn').addEventListener('click',async()=>{
  const name=$('authName').value.trim();
  if(name.length<2){
@@ -633,7 +656,6 @@ $('signupBtn').addEventListener('click',async()=>{
 $('logoutBtn').addEventListener('click',()=>auth.signOut());
 
 $('editProfileBtn').addEventListener('click',async()=>{
- if(!currentUser)return;
 
  const name=prompt('اكتب اسم اللاعب الجديد',player?.displayName||'');
  if(name===null)return;
